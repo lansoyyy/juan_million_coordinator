@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.of(context).pushReplacement(MaterialPageRoute(
                       builder: (context) => const CoordinatorHomeScreen()));
                 } else {
-                  showToast('Invalid admin credentials!');
+                  showToast('Invalid coordinator credentials!');
                 }
               },
             ),
