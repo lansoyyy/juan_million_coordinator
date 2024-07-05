@@ -5,6 +5,7 @@ import 'package:juan_million/screens/admin_home.dart';
 import 'package:juan_million/screens/auth/customer_signup_screen.dart';
 import 'package:juan_million/screens/auth/signup_screen.dart';
 import 'package:juan_million/screens/business_home_screen.dart';
+import 'package:juan_million/screens/coordinator_home.dart';
 import 'package:juan_million/screens/customer_home_screen.dart';
 import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
@@ -55,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 200,
             ),
             TextWidget(
-              text: 'Hello Admin!',
+              text: 'Hello Coordinator!',
               fontSize: 32,
               fontFamily: 'Bold',
               color: primary,
@@ -98,10 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 300,
               label: 'Log in',
               onPressed: () {
-                if (username.text == 'admin@juan4all.com' &&
+                if (username.text == 'coordinator@juan4all.com' &&
                     password.text == 'juan4all') {
                   Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const AdminHome()));
+                      builder: (context) => const CoordinatorHomeScreen()));
                 } else {
                   showToast('Invalid admin credentials!');
                 }
