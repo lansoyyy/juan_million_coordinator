@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -98,7 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ButtonWidget(
               width: 300,
               label: 'Log in',
-              onPressed: () {
+              onPressed: () async {
+                // var document = FirebaseFirestore.instance.doc('App/versions');
+                // var snapshot = await document.get();
+
+                // print(snapshot['version']);
                 if (username.text == 'coordinator@juan4all.com' &&
                     password.text == 'juan4all') {
                   Navigator.of(context).pushReplacement(MaterialPageRoute(
