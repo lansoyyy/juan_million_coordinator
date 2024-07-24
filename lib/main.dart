@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Juan 4 All - Coordinator',
-      home: MainCoordinatorHomeScreen(),
+      home: LoginScreen(),
     );
   }
 }
