@@ -8,6 +8,7 @@ import 'package:juan_million/screens/auth/signup_screen.dart';
 import 'package:juan_million/screens/business_home_screen.dart';
 import 'package:juan_million/screens/coordinator_home.dart';
 import 'package:juan_million/screens/customer_home_screen.dart';
+import 'package:juan_million/screens/main_coordinator_home.dart';
 import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
 import 'package:juan_million/widgets/text_widget.dart';
@@ -152,7 +153,8 @@ class _LoginScreenState extends State<LoginScreen> {
           email: '${username.text}@coordinator.com', password: password.text);
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
+        MaterialPageRoute(
+            builder: (context) => const MainCoordinatorHomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
       showToast('Invalid coordinator credentials!');
