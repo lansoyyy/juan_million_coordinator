@@ -6,6 +6,7 @@ import 'package:juan_million/screens/pages/coordinator_wallet.dart';
 
 import '../utlis/colors.dart';
 import '../widgets/text_widget.dart';
+import 'pages/customer/myqr_page.dart';
 
 class MainCoordinatorHomeScreen extends StatefulWidget {
   const MainCoordinatorHomeScreen({super.key});
@@ -40,6 +41,16 @@ class _MainCoordinatorHomeScreenState extends State<MainCoordinatorHomeScreen> {
           color: Colors.white,
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const MyQRPage()));
+            },
+            icon: const Icon(
+              Icons.qr_code,
+              color: Colors.white,
+            ),
+          ),
           IconButton(
             onPressed: () {
               showDialog(

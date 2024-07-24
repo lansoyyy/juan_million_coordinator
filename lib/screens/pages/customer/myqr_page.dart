@@ -18,7 +18,7 @@ class _MyQRPageState extends State<MyQRPage> {
   @override
   Widget build(BuildContext context) {
     final Stream<DocumentSnapshot> userData = FirebaseFirestore.instance
-        .collection('Users')
+        .collection('Coordinator')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots();
     return Scaffold(

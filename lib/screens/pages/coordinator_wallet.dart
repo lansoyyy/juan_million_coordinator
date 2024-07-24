@@ -100,7 +100,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                               Icons.business,
                                             ),
                                             title: TextWidget(
-                                              text: 'From affiliate',
+                                              text: 'To affiliate',
                                               fontSize: 14,
                                               fontFamily: 'Bold',
                                             ),
