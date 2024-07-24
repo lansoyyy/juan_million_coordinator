@@ -356,6 +356,7 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                         .doc(data.id)
                         .update({
                       'verified': true,
+                      'wallet': 2000,
                     });
                     Navigator.of(context).pop();
                   },
