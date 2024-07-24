@@ -4,6 +4,7 @@ import 'package:juan_million/firebase_options.dart';
 import 'package:juan_million/screens/admin_home.dart';
 import 'package:juan_million/screens/coordinator_home.dart';
 import 'package:juan_million/screens/landing_screen.dart';
+import 'package:juan_million/screens/main_coordinator_home.dart';
 
 import 'screens/auth/login_screen.dart';
 
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: 'Juan 4 All - Coordinator',
-      home: LoginScreen(),
+      home: MainCoordinatorHomeScreen(),
     );
   }
 }
