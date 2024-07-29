@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:juan_million/utlis/app_constants.dart';
@@ -6,6 +7,7 @@ import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
 import 'package:juan_million/widgets/text_widget.dart';
 import 'package:intl/intl.dart' show DateFormat, toBeginningOfSentenceCase;
+import 'package:juan_million/widgets/toast_widget.dart';
 
 class CoordinatorHomeScreen extends StatefulWidget {
   const CoordinatorHomeScreen({super.key});
@@ -19,192 +21,214 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
   String nameSearched = '';
   @override
   Widget build(BuildContext context) {
+    final Stream<DocumentSnapshot> userData = FirebaseFirestore.instance
+        .collection('Coordinator')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .snapshots();
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          Container(
-            height: 40,
-            width: double.infinity,
-            decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.black,
-                ),
-                borderRadius: BorderRadius.circular(100)),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 10, right: 10),
-              child: TextFormField(
-                style: const TextStyle(
-                    color: Colors.black, fontFamily: 'Regular', fontSize: 14),
-                onChanged: (value) {
-                  setState(() {
-                    nameSearched = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.black,
-                    ),
-                    hintText: 'Search Affiliates',
-                    hintStyle: TextStyle(fontFamily: 'QRegular'),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Colors.grey,
-                    )),
-                controller: searchController,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 0, right: 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: StreamBuilder<DocumentSnapshot>(
+          stream: userData,
+          builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: Text('Loading'));
+            } else if (snapshot.hasError) {
+              return const Center(child: Text('Something went wrong'));
+            } else if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            dynamic mydata = snapshot.data;
+            return Column(
               children: [
+                Container(
+                  height: 40,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.black,
+                      ),
+                      borderRadius: BorderRadius.circular(100)),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: TextFormField(
+                      style: const TextStyle(
+                          color: Colors.black,
+                          fontFamily: 'Regular',
+                          fontSize: 14),
+                      onChanged: (value) {
+                        setState(() {
+                          nameSearched = value;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                          labelStyle: TextStyle(
+                            color: Colors.black,
+                          ),
+                          hintText: 'Search Affiliates',
+                          hintStyle: TextStyle(fontFamily: 'QRegular'),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                          )),
+                      controller: searchController,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 0, right: 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('Business')
+                              .where('verified', isEqualTo: false)
+                              .where('name',
+                                  isGreaterThanOrEqualTo:
+                                      toBeginningOfSentenceCase(nameSearched))
+                              .where('name',
+                                  isLessThan:
+                                      '${toBeginningOfSentenceCase(nameSearched)}z')
+                              .snapshots(),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if (snapshot.hasError) {
+                              print(snapshot.error);
+                              return const Center(child: Text('Error'));
+                            }
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Padding(
+                                padding: EdgeInsets.only(top: 50),
+                                child: Center(
+                                    child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                )),
+                              );
+                            }
+
+                            final data = snapshot.requireData;
+
+                            return SizedBox(
+                              height: 490,
+                              child: ListView.builder(
+                                itemCount: data.docs.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: GestureDetector(
+                                      child: Card(
+                                        elevation: 5,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
+                                          ),
+                                          width: double.infinity,
+                                          height: 150,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  width: 150,
+                                                  height: 120,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[200],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      10,
+                                                    ),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10.0),
+                                                    child: Center(
+                                                      child: Image.network(
+                                                        data.docs[index]
+                                                            ['logo'],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  width: 20,
+                                                ),
+                                                Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 100,
+                                                      child: TextWidget(
+                                                        text: data.docs[index]
+                                                            ['name'],
+                                                        fontSize: 24,
+                                                        color: blue,
+                                                        fontFamily: 'Bold',
+                                                      ),
+                                                    ),
+                                                    TextWidget(
+                                                      text:
+                                                          'Payment: ${AppConstants.formatNumberWithPeso(data.docs[index]['packagePayment'])}',
+                                                      fontSize: 11,
+                                                      color: blue,
+                                                      fontFamily: 'Regular',
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    ButtonWidget(
+                                                      radius: 100,
+                                                      height: 30,
+                                                      width: 75,
+                                                      fontSize: 12,
+                                                      label: 'Verify',
+                                                      onPressed: () {
+                                                        verifyDialog(
+                                                            data.docs[index],
+                                                            mydata['wallet']);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }),
+                    ],
+                  ),
+                ),
                 const SizedBox(
                   height: 10,
                 ),
-                StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('Business')
-                        .where('verified', isEqualTo: false)
-                        .where('name',
-                            isGreaterThanOrEqualTo:
-                                toBeginningOfSentenceCase(nameSearched))
-                        .where('name',
-                            isLessThan:
-                                '${toBeginningOfSentenceCase(nameSearched)}z')
-                        .snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if (snapshot.hasError) {
-                        print(snapshot.error);
-                        return const Center(child: Text('Error'));
-                      }
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Padding(
-                          padding: EdgeInsets.only(top: 50),
-                          child: Center(
-                              child: CircularProgressIndicator(
-                            color: Colors.black,
-                          )),
-                        );
-                      }
-
-                      final data = snapshot.requireData;
-
-                      return SizedBox(
-                        height: 490,
-                        child: ListView.builder(
-                          itemCount: data.docs.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: GestureDetector(
-                                child: Card(
-                                  elevation: 5,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(
-                                        15,
-                                      ),
-                                    ),
-                                    width: double.infinity,
-                                    height: 150,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 10, right: 10),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Container(
-                                            width: 150,
-                                            height: 120,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                10,
-                                              ),
-                                            ),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(10.0),
-                                              child: Center(
-                                                child: Image.network(
-                                                  data.docs[index]['logo'],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            width: 20,
-                                          ),
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(
-                                                width: 100,
-                                                child: TextWidget(
-                                                  text: data.docs[index]
-                                                      ['name'],
-                                                  fontSize: 24,
-                                                  color: blue,
-                                                  fontFamily: 'Bold',
-                                                ),
-                                              ),
-                                              TextWidget(
-                                                text:
-                                                    'Payment: ${AppConstants.formatNumberWithPeso(data.docs[index]['packagePayment'])}',
-                                                fontSize: 11,
-                                                color: blue,
-                                                fontFamily: 'Regular',
-                                              ),
-                                              const SizedBox(
-                                                height: 5,
-                                              ),
-                                              ButtonWidget(
-                                                radius: 100,
-                                                height: 30,
-                                                width: 75,
-                                                fontSize: 12,
-                                                label: 'Verify',
-                                                onPressed: () {
-                                                  verifyDialog(
-                                                      data.docs[index]);
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }),
               ],
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-        ],
-      ),
+            );
+          }),
     );
   }
 
-  verifyDialog(data) {
+  verifyDialog(data, int mywallet) {
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -351,14 +375,26 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                 ),
                 MaterialButton(
                   onPressed: () async {
-                    await FirebaseFirestore.instance
-                        .collection('Business')
-                        .doc(data.id)
-                        .update({
-                      'verified': true,
-                      'wallet': 2000,
-                    });
                     Navigator.of(context).pop();
+
+                    if (mywallet >= 2000) {
+                      await FirebaseFirestore.instance
+                          .collection('Business')
+                          .doc(data.id)
+                          .update({
+                        'verified': true,
+                        // 'wallet': 2000,
+                      });
+
+                      await FirebaseFirestore.instance
+                          .collection('Coordinator')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .update({
+                        'wallet': FieldValue.increment(-2000),
+                      });
+                    } else {
+                      showToast('Your wallet balance is not enough!');
+                    }
                   },
                   child: Text(
                     'Verify Affiliate',
