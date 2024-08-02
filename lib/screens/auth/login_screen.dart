@@ -8,6 +8,7 @@ import 'package:juan_million/screens/auth/signup_screen.dart';
 import 'package:juan_million/screens/business_home_screen.dart';
 import 'package:juan_million/screens/coordinator_home.dart';
 import 'package:juan_million/screens/customer_home_screen.dart';
+import 'package:juan_million/screens/main_coordinator_home.dart';
 import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
 import 'package:juan_million/widgets/text_widget.dart';
@@ -67,14 +68,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             TextFieldWidget(
               fontStyle: FontStyle.normal,
-              hint: 'Email',
+              hint: 'Username',
               borderColor: blue,
               radius: 12,
               width: 300,
               prefixIcon: Icons.person_3_outlined,
               isRequred: false,
               controller: username,
-              label: 'Email',
+              label: 'Username',
             ),
             const SizedBox(
               height: 20,
@@ -104,13 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // var snapshot = await document.get();
 
                 // print(snapshot['version']);
-                if (username.text == 'coordinator@juan4all.com' &&
-                    password.text == 'juan4all') {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const CoordinatorHomeScreen()));
-                } else {
-                  showToast('Invalid coordinator credentials!');
-                }
+                login(context);
               },
             ),
             // const SizedBox(
@@ -150,5 +145,21 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  login(context) async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: '${username.text}@coordinator.com', password: password.text);
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+            builder: (context) => const MainCoordinatorHomeScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      showToast('Invalid coordinator credentials!');
+    } on Exception catch (e) {
+      showToast("An error occurred: $e");
+    }
   }
 }
