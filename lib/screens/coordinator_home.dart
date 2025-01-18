@@ -1,12 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart' show DateFormat, toBeginningOfSentenceCase;
 import 'package:juan_million/utlis/app_constants.dart';
 import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
 import 'package:juan_million/widgets/text_widget.dart';
-import 'package:intl/intl.dart' show DateFormat, toBeginningOfSentenceCase;
 import 'package:juan_million/widgets/toast_widget.dart';
 
 class CoordinatorHomeScreen extends StatefulWidget {
@@ -383,7 +382,7 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                           .doc(data.id)
                           .update({
                         'verified': true,
-                        // 'wallet': 2000,
+                        'wallet': 100,
                       });
 
                       await FirebaseFirestore.instance
