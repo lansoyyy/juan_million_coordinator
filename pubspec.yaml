@@ -42,8 +42,9 @@ dependencies:
   firebase_storage:
   firebase_auth:
   qr_flutter:
-  qr_code_scanner: ^1.0.0
-  flutter_barcode_scanner:
+  # qr_code_scanner: ^1.0.0
+  # flutter_barcode_scanner:
+  flutter_barcode_scanner_plus:
   paymongo_sdk:
   image_picker:
   salomon_bottom_bar:
