@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
-Future<bool?> showToast(msg) {
-  return Fluttertoast.showToast(
-    backgroundColor: Colors.red,
-    toastLength: Toast.LENGTH_LONG,
-    msg: msg,
-  );
+import 'package:get/get.dart';
+
+
+ showToast(msg) {
+
+
+  Get.showSnackbar(GetSnackBar(
+   message:  msg,
+   backgroundColor: Colors.red,
+  
+   duration: const Duration(seconds: 2),
+ ));
 }

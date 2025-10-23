@@ -48,6 +48,7 @@ dependencies:
   paymongo_sdk:
   image_picker:
   salomon_bottom_bar:
+  get:
 
 dev_dependencies:
   flutter_test:
