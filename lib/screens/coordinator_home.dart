@@ -18,7 +18,6 @@ class CoordinatorHomeScreen extends StatefulWidget {
 class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
   final searchController = TextEditingController();
   String nameSearched = '';
-  bool isHovering = false;
   
   @override
   Widget build(BuildContext context) {
@@ -165,7 +164,7 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                             ),
                             child: TextField(
                               controller: searchController,
-                              onChanged: (value) {
+                              onSubmitted: (value) {
                                 setState(() {
                                   nameSearched = value;
                                 });
@@ -287,26 +286,21 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
+                              return Container(
                                 margin: const EdgeInsets.only(bottom: 20),
-                                child: MouseRegion(
-                                  onEnter: (_) => setState(() => isHovering = true),
-                                  onExit: (_) => setState(() => isHovering = false),
-                                  child: Container(
-                                    width: cardWidth,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.08),
-                                          blurRadius: 15,
-                                          offset: const Offset(0, 5),
-                                        ),
-                                      ],
-                                    ),
+                                child: Container(
+                                  width: cardWidth,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.08),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(20),
                                       onTap: () => verifyDialog(data.docs[index], mydata['wallet']),
@@ -431,7 +425,6 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                                       ),
                                     ),
                                   ),
-                                ),
                               );
                             },
                             childCount: data.docs.length,
