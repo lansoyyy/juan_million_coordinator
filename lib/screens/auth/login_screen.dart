@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:juan_million/screens/main_coordinator_home.dart';
+import 'package:juan_million/screens/auth/coordinator_signup_screen.dart';
 import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
 import 'package:juan_million/widgets/text_widget.dart';
@@ -27,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (context, constraints) {
           // Determine if we're on web/desktop based on screen width
           bool isWeb = constraints.maxWidth > 600;
-          
+
           // Calculate responsive dimensions
           double headerHeight = isWeb ? constraints.maxHeight * 0.35 : 225;
           double logoHeight = isWeb ? constraints.maxHeight * 0.25 : 200;
@@ -35,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
           double titleFontSize = isWeb ? 38 : 32;
           double containerPadding = isWeb ? 40 : 20;
           double borderRadius = isWeb ? 200 : 150;
-          
+
           return SingleChildScrollView(
             child: Column(
               children: [
@@ -55,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Main content container
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -69,9 +71,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         'assets/images/Juan4All 2.png',
                         height: logoHeight,
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Title
                       TextWidget(
                         text: 'Hello Coordinator!',
@@ -79,9 +81,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontFamily: 'Bold',
                         color: primary,
                       ),
-                      
+
                       const SizedBox(height: 30),
-                      
+
                       // Login form container
                       Container(
                         width: isWeb ? formWidth + 40 : double.infinity,
@@ -91,7 +93,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF9E9E9E).withValues(alpha: 0.1),
+                              color: const Color(0xFF9E9E9E)
+                                  .withValues(alpha: 0.1),
                               spreadRadius: 1,
                               blurRadius: 10,
                               offset: const Offset(0, 3),
@@ -112,9 +115,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: username,
                               label: 'Username',
                             ),
-                            
+
                             const SizedBox(height: 25),
-                            
+
                             // Password field
                             TextFieldWidget(
                               showEye: true,
@@ -129,9 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: password,
                               label: 'Password',
                             ),
-                            
+
                             const SizedBox(height: 35),
-                            
+
                             // Login button with hover effect
                             MouseRegion(
                               onEnter: (_) => setState(() => isHovering = true),
@@ -153,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            
+
                             // Uncomment this section if you want to add signup link
                             // SizedBox(height: isWeb ? 20 : 10),
                             // Row(
@@ -183,10 +186,38 @@ class _LoginScreenState extends State<LoginScreen> {
                             //     ),
                             //   ],
                             // ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TextWidget(
+                                  text:
+                                      'Don\'t have a coordinator account yet?',
+                                  fontSize: isWeb ? 14 : 12,
+                                  color: blue,
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const CoordinatorSignupScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: TextWidget(
+                                    text: 'Register',
+                                    fontSize: isWeb ? 16 : 14,
+                                    decoration: TextDecoration.underline,
+                                    color: primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 60),
                     ],
                   ),
@@ -201,8 +232,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
   login(context) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: '${username.text}@coordinator.com', password: password.text);
+      final email = '${username.text}@coordinator.com';
+
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password.text,
+      );
+
+      final uid = userCredential.user!.uid;
+
+      final doc = await FirebaseFirestore.instance
+          .collection('Coordinator')
+          .doc(uid)
+          .get();
+
+      final data = doc.data();
+      final isApproved = data != null && (data['approved'] == true);
+
+      if (!isApproved) {
+        await FirebaseAuth.instance.signOut();
+        showToast('Your coordinator account is pending admin approval.');
+        return;
+      }
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
