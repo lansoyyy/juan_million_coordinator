@@ -1,16 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:juan_million/screens/main_coordinator_home.dart';
 import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/button_widget.dart';
 import 'package:juan_million/widgets/text_widget.dart';
 import 'package:juan_million/widgets/textfield_widget.dart';
 import 'package:juan_million/widgets/toast_widget.dart';
-import 'package:path/path.dart' as path;
 
 class CoordinatorSignupScreen extends StatefulWidget {
   const CoordinatorSignupScreen({super.key});
@@ -31,23 +29,45 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
 
   bool isSubmitting = false;
 
-  Future<void> uploadDocument(String docType) async {
-    final picker = ImagePicker();
-    XFile? pickedImage;
+  String _getContentTypeFromExtension(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      default:
+        return 'application/octet-stream';
+    }
+  }
 
+  Future<void> uploadDocument(String docType) async {
     try {
-      pickedImage = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
+      final result = await FilePicker.platform.pickFiles(
+        withData: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
       );
 
-      if (pickedImage == null) {
+      if (result == null || result.files.isEmpty) {
         return;
       }
 
-      final fileName = path.basename(pickedImage.path);
+      final pickedFile = result.files.single;
+      if (pickedFile.bytes == null) {
+        return;
+      }
 
-      await showDialog(
+      final fileName = pickedFile.name;
+
+      showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) => const Padding(
@@ -78,13 +98,13 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
       try {
         final ref = firebase_storage.FirebaseStorage.instance
             .ref('CoordinatorDocs/$docType/$fileName');
-
-        final bytes = await pickedImage.readAsBytes();
+        final bytes = pickedFile.bytes!;
+        final contentType = _getContentTypeFromExtension(fileName);
 
         await ref.putData(
           bytes,
           firebase_storage.SettableMetadata(
-            contentType: 'image/jpeg',
+            contentType: contentType,
           ),
         );
 
@@ -117,6 +137,10 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
       if (kDebugMode) {
         print(err);
       }
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      showToast('Failed to upload file.');
     }
   }
 
@@ -160,13 +184,14 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
         'createdAt': DateTime.now(),
       });
 
+      await FirebaseAuth.instance.signOut();
+
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const MainCoordinatorHomeScreen(),
-        ),
-      );
+      showToast(
+          'Registration submitted. Please wait for admin approval, then log in.');
+
+      Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         showToast('The password provided is too weak.');

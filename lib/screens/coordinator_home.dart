@@ -18,22 +18,23 @@ class CoordinatorHomeScreen extends StatefulWidget {
 class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
   final searchController = TextEditingController();
   String nameSearched = '';
-  
+
   @override
   Widget build(BuildContext context) {
     final Stream<DocumentSnapshot> userData = FirebaseFirestore.instance
         .collection('Coordinator')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots();
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 800;
           double horizontalPadding = isWeb ? 40.0 : 20.0;
-          double cardWidth = isWeb ? constraints.maxWidth * 0.8 : double.infinity;
-          
+          double cardWidth =
+              isWeb ? constraints.maxWidth * 0.8 : double.infinity;
+
           return StreamBuilder<DocumentSnapshot>(
             stream: userData,
             builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
@@ -57,7 +58,8 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                      Icon(Icons.error_outline,
+                          size: 64, color: Colors.red[400]),
                       const SizedBox(height: 20),
                       TextWidget(
                         text: 'Something went wrong',
@@ -72,9 +74,9 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                   child: CircularProgressIndicator(color: primary),
                 );
               }
-              
+
               dynamic mydata = snapshot.data;
-              
+
               return CustomScrollView(
                 slivers: [
                   // Header Section
@@ -134,11 +136,12 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                                 child: Column(
                                   children: [
                                     Icon(Icons.account_balance_wallet,
-                                         color: Colors.white,
-                                         size: isWeb ? 30 : 24),
+                                        color: Colors.white,
+                                        size: isWeb ? 30 : 24),
                                     const SizedBox(height: 5),
                                     TextWidget(
-                                      text: AppConstants.formatNumberWithPeso(mydata['wallet'] ?? 0),
+                                      text: AppConstants.formatNumberWithPeso(
+                                          mydata['wallet'] ?? 0),
                                       fontSize: isWeb ? 18 : 16,
                                       color: Colors.white,
                                       fontFamily: 'Bold',
@@ -190,18 +193,20 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Pending Verifications Section
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: horizontalPadding),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 30),
                           Row(
                             children: [
-                              Icon(Icons.pending_actions, color: primary, size: 28),
+                              Icon(Icons.pending_actions,
+                                  color: primary, size: 28),
                               const SizedBox(width: 10),
                               TextWidget(
                                 text: 'Pending Verifications',
@@ -216,16 +221,21 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Business List
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('Business')
                         .where('verified', isEqualTo: false)
-                        .where('name', isGreaterThanOrEqualTo: toBeginningOfSentenceCase(nameSearched))
-                        .where('name', isLessThan: '${toBeginningOfSentenceCase(nameSearched)}z')
+                        .where('name',
+                            isGreaterThanOrEqualTo:
+                                toBeginningOfSentenceCase(nameSearched))
+                        .where('name',
+                            isLessThan:
+                                '${toBeginningOfSentenceCase(nameSearched)}z')
                         .snapshots(),
-                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
                       if (snapshot.hasError) {
                         return SliverToBoxAdapter(
                           child: Center(
@@ -233,7 +243,8 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                               padding: const EdgeInsets.only(top: 50),
                               child: Column(
                                 children: [
-                                  Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                                  Icon(Icons.error_outline,
+                                      size: 64, color: Colors.red[400]),
                                   const SizedBox(height: 20),
                                   TextWidget(
                                     text: 'Error loading data',
@@ -246,7 +257,7 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                           ),
                         );
                       }
-                      
+
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return SliverToBoxAdapter(
                           child: Padding(
@@ -282,7 +293,8 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       }
 
                       return SliverPadding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: horizontalPadding),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -295,136 +307,161 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.08),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.08),
                                         blurRadius: 15,
                                         offset: const Offset(0, 5),
                                       ),
                                     ],
                                   ),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () => verifyDialog(data.docs[index], mydata['wallet']),
-                                      child: Padding(
-                                        padding: EdgeInsets.all(isWeb ? 25 : 20),
-                                        child: Row(
-                                          children: [
-                                            // Business Logo
-                                            Container(
-                                              width: isWeb ? 120 : 100,
-                                              height: isWeb ? 120 : 100,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[100],
-                                                borderRadius: BorderRadius.circular(15),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withValues(alpha: 0.05),
-                                                    blurRadius: 10,
-                                                    offset: const Offset(0, 3),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(15),
-                                                child: Image.network(
-                                                  data.docs[index]['logo'],
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (context, error, stackTrace) {
-                                                    return Icon(Icons.business,
-                                                               color: grey,
-                                                               size: isWeb ? 50 : 40);
-                                                  },
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () => verifyDialog(
+                                        data.docs[index], mydata['wallet']),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(isWeb ? 25 : 20),
+                                      child: Row(
+                                        children: [
+                                          // Business Logo
+                                          Container(
+                                            width: isWeb ? 120 : 100,
+                                            height: isWeb ? 120 : 100,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[100],
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.05),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 3),
                                                 ),
+                                              ],
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              child: Image.network(
+                                                data.docs[index]['logo'],
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                    stackTrace) {
+                                                  return Icon(Icons.business,
+                                                      color: grey,
+                                                      size: isWeb ? 50 : 40);
+                                                },
                                               ),
                                             ),
-                                            const SizedBox(width: 20),
-                                            // Business Details
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  TextWidget(
-                                                    text: data.docs[index]['name'],
-                                                    fontSize: isWeb ? 22 : 18,
-                                                    fontFamily: 'Bold',
-                                                    color: primary,
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.email_outlined,
-                                                           color: grey,
-                                                           size: isWeb ? 18 : 16),
-                                                      const SizedBox(width: 5),
-                                                      Expanded(
-                                                        child: TextWidget(
-                                                          text: data.docs[index]['email'],
-                                                          fontSize: isWeb ? 14 : 12,
-                                                          color: grey,
-                                                          fontFamily: 'Regular',
-                                                        ),
+                                          ),
+                                          const SizedBox(width: 20),
+                                          // Business Details
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                TextWidget(
+                                                  text: data.docs[index]
+                                                      ['name'],
+                                                  fontSize: isWeb ? 22 : 18,
+                                                  fontFamily: 'Bold',
+                                                  color: primary,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.email_outlined,
+                                                        color: grey,
+                                                        size: isWeb ? 18 : 16),
+                                                    const SizedBox(width: 5),
+                                                    Expanded(
+                                                      child: TextWidget(
+                                                        text: data.docs[index]
+                                                            ['email'],
+                                                        fontSize:
+                                                            isWeb ? 14 : 12,
+                                                        color: grey,
+                                                        fontFamily: 'Regular',
                                                       ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 5),
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.location_on_outlined,
-                                                           color: grey,
-                                                           size: isWeb ? 18 : 16),
-                                                      const SizedBox(width: 5),
-                                                      Expanded(
-                                                        child: TextWidget(
-                                                          text: data.docs[index]['address'],
-                                                          fontSize: isWeb ? 14 : 12,
-                                                          color: grey,
-                                                          fontFamily: 'Regular',
-                                                        ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 5),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                        Icons
+                                                            .location_on_outlined,
+                                                        color: grey,
+                                                        size: isWeb ? 18 : 16),
+                                                    const SizedBox(width: 5),
+                                                    Expanded(
+                                                      child: TextWidget(
+                                                        text: data.docs[index]
+                                                            ['address'],
+                                                        fontSize:
+                                                            isWeb ? 14 : 12,
+                                                        color: grey,
+                                                        fontFamily: 'Regular',
                                                       ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 15),
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      Container(
-                                                        padding: const EdgeInsets.symmetric(
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 15),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
                                                           horizontal: 12,
-                                                          vertical: 6
-                                                        ),
-                                                        decoration: BoxDecoration(
-                                                          color: primary.withValues(alpha: 0.1),
-                                                          borderRadius: BorderRadius.circular(20),
-                                                        ),
-                                                        child: TextWidget(
-                                                          text: AppConstants.formatNumberWithPeso(
-                                                            data.docs[index]['packagePayment']
-                                                          ),
-                                                          fontSize: isWeb ? 16 : 14,
-                                                          fontFamily: 'Bold',
-                                                          color: primary,
-                                                        ),
+                                                          vertical: 6),
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            primary.withValues(
+                                                                alpha: 0.1),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
                                                       ),
-                                                      ButtonWidget(
-                                                        width: isWeb ? 120 : 100,
-                                                        height: isWeb ? 45 : 40,
-                                                        radius: 25,
-                                                        fontSize: isWeb ? 16 : 14,
-                                                        label: 'Verify',
+                                                      child: TextWidget(
+                                                        text: AppConstants
+                                                            .formatNumberWithPeso(
+                                                                data.docs[index]
+                                                                    [
+                                                                    'packagePayment']),
+                                                        fontSize:
+                                                            isWeb ? 16 : 14,
+                                                        fontFamily: 'Bold',
                                                         color: primary,
-                                                        onPressed: () {
-                                                          verifyDialog(data.docs[index], mydata['wallet']);
-                                                        },
                                                       ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
+                                                    ),
+                                                    ButtonWidget(
+                                                      width: isWeb ? 120 : 100,
+                                                      height: isWeb ? 45 : 40,
+                                                      radius: 25,
+                                                      fontSize: isWeb ? 16 : 14,
+                                                      label: 'Verify',
+                                                      color: primary,
+                                                      onPressed: () {
+                                                        verifyDialog(
+                                                            data.docs[index],
+                                                            mydata['wallet']);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
+                                ),
                               );
                             },
                             childCount: data.docs.length,
@@ -433,7 +470,7 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       );
                     },
                   ),
-                  
+
                   // Bottom padding
                   const SliverToBoxAdapter(
                     child: SizedBox(height: 30),
@@ -449,7 +486,7 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
 
   verifyDialog(data, int mywallet) {
     bool isWeb = MediaQuery.of(context).size.width > 800;
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -483,9 +520,9 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Business Logo
                   Center(
                     child: Container(
@@ -509,16 +546,15 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Icon(Icons.business,
-                                       color: grey,
-                                       size: isWeb ? 60 : 50);
+                                color: grey, size: isWeb ? 60 : 50);
                           },
                         ),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Business Name
                   TextWidget(
                     text: data['name'],
@@ -526,9 +562,9 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                     fontFamily: 'Bold',
                     color: primary,
                   ),
-                  
+
                   const SizedBox(height: 5),
-                  
+
                   // Business Email
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -546,9 +582,9 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 25),
-                  
+
                   // Information Cards
                   _buildInfoCard(
                     title: 'Address',
@@ -556,27 +592,27 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                     icon: Icons.location_on_outlined,
                     isWeb: isWeb,
                   ),
-                  
+
                   const SizedBox(height: 15),
-                  
+
                   _buildInfoCard(
                     title: 'Business Type',
                     content: data['clarification'],
                     icon: Icons.business_center_outlined,
                     isWeb: isWeb,
                   ),
-                  
+
                   const SizedBox(height: 15),
-                  
+
                   _buildInfoCard(
                     title: 'Representative',
                     content: data['representative'],
                     icon: Icons.person_outline,
                     isWeb: isWeb,
                   ),
-                  
+
                   const SizedBox(height: 25),
-                  
+
                   // Payment Section
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -605,7 +641,8 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                           ],
                         ),
                         TextWidget(
-                          text: AppConstants.formatNumberWithPeso(data['packagePayment']),
+                          text: AppConstants.formatNumberWithPeso(
+                              data['packagePayment']),
                           fontSize: isWeb ? 24 : 20,
                           fontFamily: 'Bold',
                           color: primary,
@@ -613,9 +650,9 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 30),
-                  
+
                   // Action Buttons
                   Row(
                     children: [
@@ -623,7 +660,8 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
+                            padding:
+                                EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
