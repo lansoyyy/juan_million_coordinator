@@ -21,22 +21,23 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
   final pts = TextEditingController();
   String selected = '';
   bool isHovering = false;
-  
+
   @override
   Widget build(BuildContext context) {
     final Stream<DocumentSnapshot> userData = FirebaseFirestore.instance
         .collection('Coordinator')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots();
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 800;
           double horizontalPadding = isWeb ? 40.0 : 20.0;
-          double cardWidth = isWeb ? constraints.maxWidth * 0.8 : double.infinity;
-          
+          double cardWidth =
+              isWeb ? constraints.maxWidth * 0.8 : double.infinity;
+
           return StreamBuilder<DocumentSnapshot>(
             stream: userData,
             builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
@@ -60,7 +61,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                      Icon(Icons.error_outline,
+                          size: 64, color: Colors.red[400]),
                       const SizedBox(height: 20),
                       TextWidget(
                         text: 'Something went wrong',
@@ -75,9 +77,30 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   child: CircularProgressIndicator(color: primary),
                 );
               }
-              
-              dynamic data = snapshot.data;
-              
+
+              final docSnapshot = snapshot.data;
+              final docData = docSnapshot?.data() as Map<String, dynamic>?;
+
+              if (docData == null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.account_circle,
+                          size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 20),
+                      TextWidget(
+                        text: 'Coordinator profile not found',
+                        fontSize: 18,
+                        color: grey,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final data = docData;
+
               return CustomScrollView(
                 slivers: [
                   // Wallet Header Section
@@ -117,9 +140,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                             color: Colors.white,
                             fontFamily: 'Medium',
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Balance Display
                           Container(
                             padding: EdgeInsets.all(isWeb ? 30 : 25),
@@ -141,7 +164,10 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                 ),
                                 const SizedBox(height: 10),
                                 TextWidget(
-                                  text: AppConstants.formatNumberWithPeso(data['wallet'] ?? 0),
+                                  text: AppConstants.formatNumberWithPeso(
+                                      (data['wallet'] is num)
+                                          ? (data['wallet'] as num).toInt()
+                                          : 0),
                                   fontSize: isWeb ? 48 : 42,
                                   fontFamily: 'Bold',
                                   color: Colors.white,
@@ -149,9 +175,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 30),
-                          
+
                           // Transfer Button
                           MouseRegion(
                             onEnter: (_) => setState(() => isHovering = true),
@@ -165,7 +191,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                   });
                                   showAmountDialog();
                                 },
-                                icon: const Icon(Icons.sync_alt, color: Colors.white),
+                                icon: const Icon(Icons.sync_alt,
+                                    color: Colors.white),
                                 label: TextWidget(
                                   text: 'Transfer to Affiliate',
                                   fontSize: isWeb ? 16 : 14,
@@ -173,7 +200,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                   fontFamily: 'Medium',
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: 0.2),
                                   foregroundColor: Colors.white,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isWeb ? 30 : 25,
@@ -182,7 +210,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                     side: BorderSide(
-                                      color: Colors.white.withValues(alpha: 0.5),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),
@@ -191,17 +220,18 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 10),
                         ],
                       ),
                     ),
                   ),
-                  
+
                   // Transactions Section
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: horizontalPadding),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -223,14 +253,15 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       ),
                     ),
                   ),
-                  
+
                   // Transaction List
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('Wallets')
                         .orderBy('dateTime', descending: true)
                         .snapshots(),
-                    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
                       if (snapshot.hasError) {
                         return SliverToBoxAdapter(
                           child: Center(
@@ -238,7 +269,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                               padding: const EdgeInsets.only(top: 50),
                               child: Column(
                                 children: [
-                                  Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                                  Icon(Icons.error_outline,
+                                      size: 64, color: Colors.red[400]),
                                   const SizedBox(height: 20),
                                   TextWidget(
                                     text: 'Error loading transactions',
@@ -251,7 +283,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                           ),
                         );
                       }
-                      
+
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return SliverToBoxAdapter(
                           child: Padding(
@@ -264,10 +296,13 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       }
 
                       final data = snapshot.requireData;
-                      final filteredData = data.docs.where((doc) =>
-                        doc['uid'] == FirebaseAuth.instance.currentUser!.uid ||
-                        doc['from'] == FirebaseAuth.instance.currentUser!.uid
-                      ).toList();
+                      final filteredData = data.docs
+                          .where((doc) =>
+                              doc['uid'] ==
+                                  FirebaseAuth.instance.currentUser!.uid ||
+                              doc['from'] ==
+                                  FirebaseAuth.instance.currentUser!.uid)
+                          .toList();
 
                       if (filteredData.isEmpty) {
                         return SliverToBoxAdapter(
@@ -276,7 +311,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.receipt_long, size: 64, color: grey),
+                                  Icon(Icons.receipt_long,
+                                      size: 64, color: grey),
                                   const SizedBox(height: 20),
                                   TextWidget(
                                     text: 'No transactions found',
@@ -291,7 +327,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       }
 
                       return SliverPadding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: horizontalPadding),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -306,7 +343,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                     borderRadius: BorderRadius.circular(15),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
                                         blurRadius: 10,
                                         offset: const Offset(0, 3),
                                       ),
@@ -320,40 +358,50 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                         Container(
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
-                                            color: filteredData[index]['pts'] > 0
-                                                ? Colors.green.withValues(alpha: 0.1)
-                                                : Colors.red.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(12),
+                                            color:
+                                                filteredData[index]['pts'] > 0
+                                                    ? Colors.green
+                                                        .withValues(alpha: 0.1)
+                                                    : Colors.red
+                                                        .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Icon(
                                             filteredData[index]['pts'] > 0
                                                 ? Icons.arrow_downward
                                                 : Icons.arrow_upward,
-                                            color: filteredData[index]['pts'] > 0
-                                                ? Colors.green
-                                                : Colors.red,
+                                            color:
+                                                filteredData[index]['pts'] > 0
+                                                    ? Colors.green
+                                                    : Colors.red,
                                             size: isWeb ? 24 : 20,
                                           ),
                                         ),
-                                        
+
                                         const SizedBox(width: 15),
-                                        
+
                                         // Transaction Details
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               TextWidget(
-                                                text: filteredData[index]['type'] ?? 'Transaction',
+                                                text: filteredData[index]
+                                                        ['type'] ??
+                                                    'Transaction',
                                                 fontSize: isWeb ? 16 : 14,
                                                 fontFamily: 'Medium',
                                                 color: Colors.black87,
                                               ),
                                               const SizedBox(height: 5),
                                               TextWidget(
-                                                text: DateFormat.yMMMd().add_jm().format(
-                                                  filteredData[index]['dateTime'].toDate()
-                                                ),
+                                                text: DateFormat.yMMMd()
+                                                    .add_jm()
+                                                    .format(filteredData[index]
+                                                            ['dateTime']
+                                                        .toDate()),
                                                 fontSize: isWeb ? 12 : 10,
                                                 color: grey,
                                                 fontFamily: 'Regular',
@@ -361,10 +409,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                             ],
                                           ),
                                         ),
-                                        
+
                                         // Amount
                                         TextWidget(
-                                          text: '${filteredData[index]['pts'] > 0 ? '+' : ''}${AppConstants.formatNumberWithPeso(filteredData[index]['pts'].abs())}',
+                                          text:
+                                              '${filteredData[index]['pts'] > 0 ? '+' : ''}${AppConstants.formatNumberWithPeso(filteredData[index]['pts'].abs())}',
                                           fontSize: isWeb ? 18 : 16,
                                           fontFamily: 'Bold',
                                           color: filteredData[index]['pts'] > 0
@@ -383,7 +432,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       );
                     },
                   ),
-                  
+
                   // Bottom padding
                   const SliverToBoxAdapter(
                     child: SizedBox(height: 30),
@@ -399,7 +448,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
   showAmountDialog() {
     bool isWeb = MediaQuery.of(context).size.width > 800;
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -427,9 +476,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Amount Input
               Container(
                 padding: const EdgeInsets.all(20),
@@ -475,9 +524,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 25),
-              
+
               // Information Note
               Container(
                 padding: const EdgeInsets.all(15),
@@ -491,7 +540,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextWidget(
-                        text: 'You will need to scan the affiliate\'s QR code after entering the amount',
+                        text:
+                            'You will need to scan the affiliate\'s QR code after entering the amount',
                         fontSize: isWeb ? 14 : 12,
                         color: primary,
                         fontFamily: 'Regular',
@@ -500,9 +550,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Action Buttons
               Row(
                 children: [
@@ -510,7 +560,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
+                        padding:
+                            EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -537,7 +588,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
-                        padding: EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
+                        padding:
+                            EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -571,13 +623,14 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
       );
 
       if (!context.mounted) return;
-      
+
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) {
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Container(
               padding: const EdgeInsets.all(30),
               child: Column(
@@ -615,9 +668,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
           .collection('Coordinator')
           .doc(FirebaseAuth.instance.currentUser!.uid)
           .get();
-      
+
       if (!context.mounted) return;
-      
+
       if (documentSnapshot['wallet'] > int.parse(pts.text)) {
         await FirebaseFirestore.instance
             .collection(selected)
@@ -631,22 +684,23 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
             .update({
           'wallet': FieldValue.increment(-int.parse(pts.text)),
         });
-        
+
         // Add transaction
         addWallet(int.parse(pts.text), qrCode,
             FirebaseAuth.instance.currentUser!.uid, 'Receive & Transfers', '');
-        
+
         // Close loading dialog
         Navigator.of(context).pop();
-        
+
         // Show success dialog
         if (!context.mounted) return;
-        
+
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (context) => Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Container(
               padding: const EdgeInsets.all(30),
               child: Column(
@@ -658,7 +712,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 50),
+                    child: const Icon(Icons.check_circle,
+                        color: Color(0xFF4CAF50), size: 50),
                   ),
                   const SizedBox(height: 20),
                   TextWidget(
@@ -669,7 +724,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   ),
                   const SizedBox(height: 10),
                   TextWidget(
-                    text: 'You have successfully transferred ${AppConstants.formatNumberWithPeso(int.parse(pts.text))}',
+                    text:
+                        'You have successfully transferred ${AppConstants.formatNumberWithPeso(int.parse(pts.text))}',
                     fontSize: 16,
                     color: grey,
                     fontFamily: 'Regular',
@@ -680,7 +736,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),

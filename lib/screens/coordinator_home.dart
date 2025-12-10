@@ -682,28 +682,41 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
                           height: isWeb ? 55 : 50,
                           fontSize: isWeb ? 16 : 14,
                           radius: 12,
-                          color: mywallet >= 2000 ? primary : Colors.grey,
+                          color: mywallet >=
+                                  (data['packagePayment'] is num
+                                      ? (data['packagePayment'] as num).toInt()
+                                      : 2000)
+                              ? primary
+                              : Colors.grey,
                           onPressed: () async {
+                            final int verificationFee =
+                                data['packagePayment'] is num
+                                    ? (data['packagePayment'] as num).toInt()
+                                    : 2000;
+
+                            if (mywallet < verificationFee) {
+                              showToast('Your wallet balance is not enough!');
+                              return;
+                            }
+
                             Navigator.of(context).pop();
 
-                            if (mywallet >= 2000) {
-                              await FirebaseFirestore.instance
-                                  .collection('Business')
-                                  .doc(data.id)
-                                  .update({
-                                'verified': true,
-                                'wallet': 100,
-                              });
+                            await FirebaseFirestore.instance
+                                .collection('Business')
+                                .doc(data.id)
+                                .update({
+                              'verified': true,
+                              'wallet': 100,
+                            });
 
-                              await FirebaseFirestore.instance
-                                  .collection('Coordinator')
-                                  .doc(FirebaseAuth.instance.currentUser!.uid)
-                                  .update({
-                                'wallet': FieldValue.increment(-2000),
-                              });
-                            } else {
-                              showToast('Your wallet balance is not enough!');
-                            }
+                            await FirebaseFirestore.instance
+                                .collection('Coordinator')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .update({
+                              'wallet': FieldValue.increment(-verificationFee),
+                            });
+
+                            showToast('Business verified successfully!');
                           },
                         ),
                       ),
