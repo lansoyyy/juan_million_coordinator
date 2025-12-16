@@ -332,6 +332,19 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
+                              final dynamic rawPts = filteredData[index]['pts'];
+                              final int ptsValue = rawPts is num
+                                  ? rawPts.toInt()
+                                  : int.tryParse(rawPts.toString()) ?? 0;
+                              final bool isPositive = ptsValue > 0;
+                              final dynamic rawDateTime =
+                                  filteredData[index]['dateTime'];
+                              final DateTime dateTime = rawDateTime is Timestamp
+                                  ? rawDateTime.toDate()
+                                  : rawDateTime is DateTime
+                                      ? rawDateTime
+                                      : DateTime.fromMillisecondsSinceEpoch(0);
+
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
@@ -358,23 +371,21 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                         Container(
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
-                                            color:
-                                                filteredData[index]['pts'] > 0
-                                                    ? Colors.green
-                                                        .withValues(alpha: 0.1)
-                                                    : Colors.red
-                                                        .withValues(alpha: 0.1),
+                                            color: isPositive
+                                                ? Colors.green
+                                                    .withValues(alpha: 0.1)
+                                                : Colors.red
+                                                    .withValues(alpha: 0.1),
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                           ),
                                           child: Icon(
-                                            filteredData[index]['pts'] > 0
+                                            isPositive
                                                 ? Icons.arrow_downward
                                                 : Icons.arrow_upward,
-                                            color:
-                                                filteredData[index]['pts'] > 0
-                                                    ? Colors.green
-                                                    : Colors.red,
+                                            color: isPositive
+                                                ? Colors.green
+                                                : Colors.red,
                                             size: isWeb ? 24 : 20,
                                           ),
                                         ),
@@ -399,9 +410,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                               TextWidget(
                                                 text: DateFormat.yMMMd()
                                                     .add_jm()
-                                                    .format(filteredData[index]
-                                                            ['dateTime']
-                                                        .toDate()),
+                                                    .format(dateTime),
                                                 fontSize: isWeb ? 12 : 10,
                                                 color: grey,
                                                 fontFamily: 'Regular',
@@ -413,10 +422,10 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                         // Amount
                                         TextWidget(
                                           text:
-                                              '${filteredData[index]['pts'] > 0 ? '+' : ''}${AppConstants.formatNumberWithPeso(filteredData[index]['pts'].abs())}',
+                                              '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
                                           fontSize: isWeb ? 18 : 16,
                                           fontFamily: 'Bold',
-                                          color: filteredData[index]['pts'] > 0
+                                          color: isPositive
                                               ? Colors.green
                                               : Colors.red,
                                         ),

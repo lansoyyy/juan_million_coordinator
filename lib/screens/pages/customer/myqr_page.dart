@@ -32,7 +32,15 @@ class _MyQRPageState extends State<MyQRPage> {
             } else if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            dynamic mydata = snapshot.data;
+            final doc = snapshot.data;
+            final data = doc?.data() as Map<String, dynamic>?;
+            if (doc == null || data == null) {
+              return const Center(child: Text('Coordinator profile not found'));
+            }
+            final name = (data['name'] ?? '').toString();
+            final wallet = (data['wallet'] is num)
+                ? (data['wallet'] as num).toInt()
+                : int.tryParse((data['wallet'] ?? '0').toString()) ?? 0;
             return Column(
               children: [
                 Container(
@@ -64,7 +72,7 @@ class _MyQRPageState extends State<MyQRPage> {
                         ),
                         Center(
                           child: TextWidget(
-                            text: mydata['name'],
+                            text: name,
                             fontSize: 18,
                             color: Colors.white,
                             fontFamily: 'Bold',
@@ -85,7 +93,7 @@ class _MyQRPageState extends State<MyQRPage> {
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: QrImageView(data: mydata.id),
+                              child: QrImageView(data: doc.id),
                             ),
                           ),
                         ),
@@ -94,7 +102,7 @@ class _MyQRPageState extends State<MyQRPage> {
                         ),
                         Center(
                           child: TextWidget(
-                            text: 'P${mydata['wallet'].toString()}.00',
+                            text: 'P${wallet.toString()}.00',
                             fontSize: 18,
                             color: Colors.white,
                             fontFamily: 'Bold',

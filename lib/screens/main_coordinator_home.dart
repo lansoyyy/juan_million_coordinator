@@ -24,6 +24,11 @@ class _MainCoordinatorHomeScreenState extends State<MainCoordinatorHomeScreen> {
     const CoordinatorWallet(),
   ];
 
+  static const List<String> _titles = <String>[
+    'Dashboard',
+    'Wallet',
+  ];
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -36,7 +41,7 @@ class _MainCoordinatorHomeScreenState extends State<MainCoordinatorHomeScreen> {
       appBar: AppBar(
         backgroundColor: blue,
         title: TextWidget(
-          text: 'Home',
+          text: _titles[_selectedIndex],
           fontSize: 18,
           color: Colors.white,
         ),
@@ -99,7 +104,10 @@ class _MainCoordinatorHomeScreenState extends State<MainCoordinatorHomeScreen> {
           ),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _widgetOptions,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: blue,
         unselectedItemColor: Colors.white,

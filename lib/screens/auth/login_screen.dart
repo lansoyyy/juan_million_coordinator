@@ -21,6 +21,69 @@ class _LoginScreenState extends State<LoginScreen> {
   final password = TextEditingController();
   bool isHovering = false;
 
+  Future<void> _sendPasswordReset(String value) async {
+    final v = value.trim();
+    if (v.isEmpty) {
+      showToast('Please enter your username to reset password.');
+      return;
+    }
+
+    final email = v.contains('@') ? v : '$v@coordinator.com';
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      showToast('Password reset email sent. Please check your inbox.');
+    } on FirebaseAuthException catch (e) {
+      showToast(e.message ?? 'Failed to send password reset email.');
+    } catch (_) {
+      showToast('Failed to send password reset email.');
+    }
+  }
+
+  void _showForgotPasswordDialog() {
+    final controller = TextEditingController(text: username.text.trim());
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Reset Password',
+            style: TextStyle(fontFamily: 'Bold'),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFieldWidget(
+                fontStyle: FontStyle.normal,
+                hint: 'Username or email',
+                borderColor: blue,
+                radius: 12,
+                width: 350,
+                prefixIcon: Icons.email_outlined,
+                isRequred: false,
+                controller: controller,
+                label: 'Username or email',
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _sendPasswordReset(controller.text);
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,6 +216,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: () async {
                                     login(context);
                                   },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _showForgotPasswordDialog,
+                                child: TextWidget(
+                                  text: 'Forgot password?',
+                                  fontSize: isWeb ? 14 : 12,
+                                  decoration: TextDecoration.underline,
+                                  color: primary,
                                 ),
                               ),
                             ),
