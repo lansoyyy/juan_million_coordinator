@@ -26,9 +26,9 @@ class _CoordinatorHomeScreenState extends State<CoordinatorHomeScreen> {
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: LayoutBuilder(
+    return Container(
+      color: const Color(0xFFF8F9FA),
+      child: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 800;
           double horizontalPadding = isWeb ? 40.0 : 20.0;
