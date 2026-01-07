@@ -10,7 +10,6 @@ showToast(msg) {
       lower.contains('not enough') ||
       lower.contains('error') ||
       lower.contains('cannot') ||
-      lower.contains('please') ||
       lower.contains('wrong') ||
       lower.contains('does not exist') ||
       lower.contains('not found');

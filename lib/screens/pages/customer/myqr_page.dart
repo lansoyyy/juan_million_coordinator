@@ -15,6 +15,8 @@ class MyQRPage extends StatefulWidget {
 }
 
 class _MyQRPageState extends State<MyQRPage> {
+  bool _showBalance = false;
+
   @override
   Widget build(BuildContext context) {
     final Stream<DocumentSnapshot> userData = FirebaseFirestore.instance
@@ -101,19 +103,32 @@ class _MyQRPageState extends State<MyQRPage> {
                           height: 20,
                         ),
                         Center(
-                          child: TextWidget(
-                            text: 'P${wallet.toString()}.00',
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontFamily: 'Bold',
-                          ),
-                        ),
-                        Center(
-                          child: TextWidget(
-                            text: 'Wallet Balance',
-                            fontSize: 9,
-                            color: Colors.white,
-                            fontFamily: 'Medium',
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _showBalance = !_showBalance;
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                TextWidget(
+                                  text: _showBalance
+                                      ? 'P${wallet.toString()}.00'
+                                      : 'P••••.00',
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                  fontFamily: 'Bold',
+                                ),
+                                TextWidget(
+                                  text: _showBalance
+                                      ? 'Tap to hide'
+                                      : 'Wallet Balance (tap to reveal)',
+                                  fontSize: 9,
+                                  color: Colors.white,
+                                  fontFamily: 'Medium',
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(
