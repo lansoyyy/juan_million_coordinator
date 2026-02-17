@@ -48,11 +48,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     children: [
                       CircularProgressIndicator(color: primary),
                       const SizedBox(height: 20),
-                      TextWidget(
-                        text: 'Loading...',
-                        fontSize: 18,
-                        color: grey,
-                      ),
+                      TextWidget(text: 'Loading...', fontSize: 18, color: grey),
                     ],
                   ),
                 );
@@ -61,8 +57,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 64, color: Colors.red[400]),
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red[400],
+                      ),
                       const SizedBox(height: 20),
                       TextWidget(
                         text: 'Something went wrong',
@@ -73,9 +72,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   ),
                 );
               } else if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(color: primary),
-                );
+                return Center(child: CircularProgressIndicator(color: primary));
               }
 
               final docSnapshot = snapshot.data;
@@ -86,8 +83,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.account_circle,
-                          size: 64, color: Colors.grey[400]),
+                      Icon(
+                        Icons.account_circle,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 20),
                       TextWidget(
                         text: 'Coordinator profile not found',
@@ -100,6 +100,13 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
               }
 
               final data = docData;
+
+              // Get coordinator profile information
+              final String name = (data['name'] ?? '') as String;
+              final String email = (data['email'] ?? '') as String;
+              final String number = (data['number'] ?? '') as String;
+              final String address = (data['address'] ?? '') as String;
+              final bool isApproved = (data['approved'] ?? false) as bool;
 
               return CustomScrollView(
                 slivers: [
@@ -114,10 +121,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            primary,
-                            primary.withValues(alpha: 0.8),
-                          ],
+                          colors: [primary, primary.withValues(alpha: 0.8)],
                         ),
                         borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(30),
@@ -165,9 +169,10 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                 const SizedBox(height: 10),
                                 TextWidget(
                                   text: AppConstants.formatNumberWithPeso(
-                                      (data['wallet'] is num)
-                                          ? (data['wallet'] as num).toInt()
-                                          : 0),
+                                    (data['wallet'] is num)
+                                        ? (data['wallet'] as num).toInt()
+                                        : 0,
+                                  ),
                                   fontSize: isWeb ? 48 : 42,
                                   fontFamily: 'Bold',
                                   color: Colors.white,
@@ -191,8 +196,10 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                   });
                                   showAmountDialog();
                                 },
-                                icon: const Icon(Icons.sync_alt,
-                                    color: Colors.white),
+                                icon: const Icon(
+                                  Icons.sync_alt,
+                                  color: Colors.white,
+                                ),
                                 label: TextWidget(
                                   text: 'Transfer to Affiliate',
                                   fontSize: isWeb ? 16 : 14,
@@ -200,8 +207,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                   fontFamily: 'Medium',
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.white.withValues(alpha: 0.2),
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   foregroundColor: Colors.white,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isWeb ? 30 : 25,
@@ -210,8 +218,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                     side: BorderSide(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.5),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       width: 1,
                                     ),
                                   ),
@@ -227,11 +236,126 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     ),
                   ),
 
+                  // Profile Information Section
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: 20,
+                      ),
+                      child: Card(
+                        elevation: 4,
+                        shadowColor: Colors.black.withValues(alpha: 0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.all(isWeb ? 30 : 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: primary.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.person,
+                                      color: primary,
+                                      size: isWeb ? 32 : 28,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        TextWidget(
+                                          text: name.isNotEmpty
+                                              ? name
+                                              : 'Coordinator',
+                                          fontSize: isWeb ? 20 : 18,
+                                          fontFamily: 'Bold',
+                                          color: Colors.black87,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isApproved
+                                                ? Colors.green.withValues(
+                                                    alpha: 0.1,
+                                                  )
+                                                : Colors.orange.withValues(
+                                                    alpha: 0.1,
+                                                  ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: TextWidget(
+                                            text: isApproved
+                                                ? 'Approved'
+                                                : 'Pending Approval',
+                                            fontSize: 12,
+                                            fontFamily: 'Medium',
+                                            color: isApproved
+                                                ? Colors.green
+                                                : Colors.orange,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              const Divider(),
+                              const SizedBox(height: 15),
+                              _buildProfileInfoRow(
+                                Icons.email_outlined,
+                                'Email',
+                                email.isNotEmpty ? email : 'Not provided',
+                                isWeb,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildProfileInfoRow(
+                                Icons.phone_outlined,
+                                'Phone',
+                                number.isNotEmpty ? number : 'Not provided',
+                                isWeb,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildProfileInfoRow(
+                                Icons.location_on_outlined,
+                                'Address',
+                                address.isNotEmpty ? address : 'Not provided',
+                                isWeb,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   // Transactions Section
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -260,8 +384,10 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         .collection('Wallets')
                         .orderBy('dateTime', descending: true)
                         .snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                    builder: (
+                      BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot,
+                    ) {
                       if (snapshot.hasError) {
                         return SliverToBoxAdapter(
                           child: Center(
@@ -269,8 +395,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                               padding: const EdgeInsets.only(top: 50),
                               child: Column(
                                 children: [
-                                  Icon(Icons.error_outline,
-                                      size: 64, color: Colors.red[400]),
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: Colors.red[400],
+                                  ),
                                   const SizedBox(height: 20),
                                   TextWidget(
                                     text: 'Error loading transactions',
@@ -289,7 +418,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                           child: Padding(
                             padding: const EdgeInsets.only(top: 50),
                             child: Center(
-                              child: CircularProgressIndicator(color: primary),
+                              child: CircularProgressIndicator(
+                                color: primary,
+                              ),
                             ),
                           ),
                         );
@@ -297,11 +428,13 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
                       final data = snapshot.requireData;
                       final filteredData = data.docs
-                          .where((doc) =>
-                              doc['uid'] ==
-                                  FirebaseAuth.instance.currentUser!.uid ||
-                              doc['from'] ==
-                                  FirebaseAuth.instance.currentUser!.uid)
+                          .where(
+                            (doc) =>
+                                doc['uid'] ==
+                                    FirebaseAuth.instance.currentUser!.uid ||
+                                doc['from'] ==
+                                    FirebaseAuth.instance.currentUser!.uid,
+                          )
                           .toList();
 
                       if (filteredData.isEmpty) {
@@ -311,8 +444,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.receipt_long,
-                                      size: 64, color: grey),
+                                  Icon(
+                                    Icons.receipt_long,
+                                    size: 64,
+                                    color: grey,
+                                  ),
                                   const SizedBox(height: 20),
                                   TextWidget(
                                     text: 'No transactions found',
@@ -327,131 +463,169 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       }
 
                       return SliverPadding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: horizontalPadding),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final dynamic rawPts = filteredData[index]['pts'];
-                              final int ptsValue = rawPts is num
-                                  ? rawPts.toInt()
-                                  : int.tryParse(rawPts.toString()) ?? 0;
-                              final bool isPositive = ptsValue > 0;
-                              final dynamic rawDateTime =
-                                  filteredData[index]['dateTime'];
-                              final DateTime dateTime = rawDateTime is Timestamp
-                                  ? rawDateTime.toDate()
-                                  : rawDateTime is DateTime
-                                      ? rawDateTime
-                                      : DateTime.fromMillisecondsSinceEpoch(0);
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final dynamic rawPts = filteredData[index]['pts'];
+                            final int ptsValue = rawPts is num
+                                ? rawPts.toInt()
+                                : int.tryParse(rawPts.toString()) ?? 0;
+                            final bool isPositive = ptsValue > 0;
+                            final dynamic rawDateTime =
+                                filteredData[index]['dateTime'];
+                            final DateTime dateTime = rawDateTime is Timestamp
+                                ? rawDateTime.toDate()
+                                : rawDateTime is DateTime
+                                    ? rawDateTime
+                                    : DateTime.fromMillisecondsSinceEpoch(0);
 
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                margin: const EdgeInsets.only(bottom: 15),
-                                child: Container(
-                                  width: cardWidth,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.05),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 3),
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              margin: const EdgeInsets.only(bottom: 15),
+                              child: Container(
+                                width: cardWidth,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
                                       ),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(isWeb ? 20 : 15),
-                                    child: Row(
-                                      children: [
-                                        // Transaction Icon
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: isPositive
-                                                ? Colors.green
-                                                    .withValues(alpha: 0.1)
-                                                : Colors.red
-                                                    .withValues(alpha: 0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            isPositive
-                                                ? Icons.arrow_downward
-                                                : Icons.arrow_upward,
-                                            color: isPositive
-                                                ? Colors.green
-                                                : Colors.red,
-                                            size: isWeb ? 24 : 20,
-                                          ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(isWeb ? 20 : 15),
+                                  child: Row(
+                                    children: [
+                                      // Transaction Icon
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: isPositive
+                                              ? Colors.green.withValues(
+                                                  alpha: 0.1,
+                                                )
+                                              : Colors.red.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
-
-                                        const SizedBox(width: 15),
-
-                                        // Transaction Details
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              TextWidget(
-                                                text: filteredData[index]
-                                                        ['type'] ??
-                                                    'Transaction',
-                                                fontSize: isWeb ? 16 : 14,
-                                                fontFamily: 'Medium',
-                                                color: Colors.black87,
-                                              ),
-                                              const SizedBox(height: 5),
-                                              TextWidget(
-                                                text: DateFormat.yMMMd()
-                                                    .add_jm()
-                                                    .format(dateTime),
-                                                fontSize: isWeb ? 12 : 10,
-                                                color: grey,
-                                                fontFamily: 'Regular',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        // Amount
-                                        TextWidget(
-                                          text:
-                                              '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
-                                          fontSize: isWeb ? 18 : 16,
-                                          fontFamily: 'Bold',
+                                        child: Icon(
+                                          isPositive
+                                              ? Icons.arrow_downward
+                                              : Icons.arrow_upward,
                                           color: isPositive
                                               ? Colors.green
                                               : Colors.red,
+                                          size: isWeb ? 24 : 20,
                                         ),
-                                      ],
-                                    ),
+                                      ),
+
+                                      const SizedBox(width: 15),
+
+                                      // Transaction Details
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            TextWidget(
+                                              text: filteredData[index]
+                                                      ['type'] ??
+                                                  'Transaction',
+                                              fontSize: isWeb ? 16 : 14,
+                                              fontFamily: 'Medium',
+                                              color: Colors.black87,
+                                            ),
+                                            const SizedBox(height: 5),
+                                            TextWidget(
+                                              text: DateFormat.yMMMd()
+                                                  .add_jm()
+                                                  .format(dateTime),
+                                              fontSize: isWeb ? 12 : 10,
+                                              color: grey,
+                                              fontFamily: 'Regular',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Amount
+                                      TextWidget(
+                                        text:
+                                            '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
+                                        fontSize: isWeb ? 18 : 16,
+                                        fontFamily: 'Bold',
+                                        color: isPositive
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            },
-                            childCount: filteredData.length,
-                          ),
+                              ),
+                            );
+                          }, childCount: filteredData.length),
                         ),
                       );
                     },
                   ),
 
                   // Bottom padding
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 30),
-                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 30)),
                 ],
               );
             },
           );
         },
       ),
+    );
+  }
+
+  Widget _buildProfileInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    bool isWeb,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: isWeb ? 22 : 20, color: Colors.grey[600]),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextWidget(
+                text: label,
+                fontSize: isWeb ? 12 : 11,
+                color: Colors.grey[600],
+                fontFamily: 'Regular',
+              ),
+              const SizedBox(height: 2),
+              TextWidget(
+                text: value,
+                fontSize: isWeb ? 15 : 14,
+                color: Colors.black87,
+                fontFamily: 'Medium',
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -569,8 +743,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isWeb ? 15 : 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -597,8 +772,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
-                        padding:
-                            EdgeInsets.symmetric(vertical: isWeb ? 15 : 12),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isWeb ? 15 : 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -638,8 +814,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
         barrierDismissible: false,
         builder: (context) {
           return Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Container(
               padding: const EdgeInsets.all(30),
               child: Column(
@@ -684,19 +861,20 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
         await FirebaseFirestore.instance
             .collection(selected)
             .doc(qrCode)
-            .update({
-          'wallet': FieldValue.increment(int.parse(pts.text)),
-        });
+            .update({'wallet': FieldValue.increment(int.parse(pts.text))});
         await FirebaseFirestore.instance
             .collection('Coordinator')
             .doc(FirebaseAuth.instance.currentUser!.uid)
-            .update({
-          'wallet': FieldValue.increment(-int.parse(pts.text)),
-        });
+            .update({'wallet': FieldValue.increment(-int.parse(pts.text))});
 
         // Add transaction
-        addWallet(int.parse(pts.text), qrCode,
-            FirebaseAuth.instance.currentUser!.uid, 'Receive & Transfers', '');
+        addWallet(
+          int.parse(pts.text),
+          qrCode,
+          FirebaseAuth.instance.currentUser!.uid,
+          'Receive & Transfers',
+          '',
+        );
 
         // Close loading dialog
         Navigator.of(context).pop();
@@ -708,8 +886,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
           context: context,
           barrierDismissible: false,
           builder: (context) => Dialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Container(
               padding: const EdgeInsets.all(30),
               child: Column(
@@ -721,8 +900,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                       color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_circle,
-                        color: Color(0xFF4CAF50), size: 50),
+                    child: const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF4CAF50),
+                      size: 50,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextWidget(
@@ -746,7 +928,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 12),
+                        horizontal: 30,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
