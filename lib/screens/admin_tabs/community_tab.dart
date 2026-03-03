@@ -68,6 +68,7 @@ class _CommunityTabState extends State<CommunityTab> {
               StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('Slots')
+                      .orderBy('dateTime')
                       .snapshots(),
                   builder: (BuildContext context,
                       AsyncSnapshot<QuerySnapshot> snapshot) {
