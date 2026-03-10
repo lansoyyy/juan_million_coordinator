@@ -35,8 +35,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 800;
           double horizontalPadding = isWeb ? 40.0 : 20.0;
-          double cardWidth =
-              isWeb ? constraints.maxWidth * 0.8 : double.infinity;
+          double cardWidth = isWeb
+              ? constraints.maxWidth * 0.8
+              : double.infinity;
 
           return StreamBuilder<DocumentSnapshot>(
             stream: userData,
@@ -384,202 +385,209 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         .collection('Wallets')
                         .orderBy('dateTime', descending: true)
                         .snapshots(),
-                    builder: (
-                      BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot,
-                    ) {
-                      if (snapshot.hasError) {
-                        return SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 50),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 64,
-                                    color: Colors.red[400],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextWidget(
-                                    text: 'Error loading transactions',
-                                    fontSize: 18,
-                                    color: Colors.red[400],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 50),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: primary,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final data = snapshot.requireData;
-                      final filteredData = data.docs
-                          .where(
-                            (doc) =>
-                                doc['uid'] ==
-                                    FirebaseAuth.instance.currentUser!.uid ||
-                                doc['from'] ==
-                                    FirebaseAuth.instance.currentUser!.uid,
-                          )
-                          .toList();
-
-                      if (filteredData.isEmpty) {
-                        return SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 50),
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.receipt_long,
-                                    size: 64,
-                                    color: grey,
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextWidget(
-                                    text: 'No transactions found',
-                                    fontSize: 18,
-                                    color: grey,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      return SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final dynamic rawPts = filteredData[index]['pts'];
-                            final int ptsValue = rawPts is num
-                                ? rawPts.toInt()
-                                : int.tryParse(rawPts.toString()) ?? 0;
-                            final bool isPositive = ptsValue > 0;
-                            final dynamic rawDateTime =
-                                filteredData[index]['dateTime'];
-                            final DateTime dateTime = rawDateTime is Timestamp
-                                ? rawDateTime.toDate()
-                                : rawDateTime is DateTime
-                                    ? rawDateTime
-                                    : DateTime.fromMillisecondsSinceEpoch(0);
-
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              margin: const EdgeInsets.only(bottom: 15),
-                              child: Container(
-                                width: cardWidth,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
+                    builder:
+                        (
+                          BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot,
+                        ) {
+                          if (snapshot.hasError) {
+                            return SliverToBoxAdapter(
+                              child: Center(
                                 child: Padding(
-                                  padding: EdgeInsets.all(isWeb ? 20 : 15),
-                                  child: Row(
+                                  padding: const EdgeInsets.only(top: 50),
+                                  child: Column(
                                     children: [
-                                      // Transaction Icon
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: isPositive
-                                              ? Colors.green.withValues(
-                                                  alpha: 0.1,
-                                                )
-                                              : Colors.red.withValues(
-                                                  alpha: 0.1,
-                                                ),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Icon(
-                                          isPositive
-                                              ? Icons.arrow_downward
-                                              : Icons.arrow_upward,
-                                          color: isPositive
-                                              ? Colors.green
-                                              : Colors.red,
-                                          size: isWeb ? 24 : 20,
-                                        ),
+                                      Icon(
+                                        Icons.error_outline,
+                                        size: 64,
+                                        color: Colors.red[400],
                                       ),
-
-                                      const SizedBox(width: 15),
-
-                                      // Transaction Details
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            TextWidget(
-                                              text: filteredData[index]
-                                                      ['type'] ??
-                                                  'Transaction',
-                                              fontSize: isWeb ? 16 : 14,
-                                              fontFamily: 'Medium',
-                                              color: Colors.black87,
-                                            ),
-                                            const SizedBox(height: 5),
-                                            TextWidget(
-                                              text: DateFormat.yMMMd()
-                                                  .add_jm()
-                                                  .format(dateTime),
-                                              fontSize: isWeb ? 12 : 10,
-                                              color: grey,
-                                              fontFamily: 'Regular',
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      // Amount
+                                      const SizedBox(height: 20),
                                       TextWidget(
-                                        text:
-                                            '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
-                                        fontSize: isWeb ? 18 : 16,
-                                        fontFamily: 'Bold',
-                                        color: isPositive
-                                            ? Colors.green
-                                            : Colors.red,
+                                        text: 'Error loading transactions',
+                                        fontSize: 18,
+                                        color: Colors.red[400],
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
                             );
-                          }, childCount: filteredData.length),
-                        ),
-                      );
-                    },
+                          }
+
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 50),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: primary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          final data = snapshot.requireData;
+                          final filteredData = data.docs
+                              .where(
+                                (doc) =>
+                                    doc['uid'] ==
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser!
+                                            .uid ||
+                                    doc['from'] ==
+                                        FirebaseAuth.instance.currentUser!.uid,
+                              )
+                              .toList();
+
+                          if (filteredData.isEmpty) {
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 50),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.receipt_long,
+                                        size: 64,
+                                        color: grey,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      TextWidget(
+                                        text: 'No transactions found',
+                                        fontSize: 18,
+                                        color: grey,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return SliverPadding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final dynamic rawPts =
+                                    filteredData[index]['pts'];
+                                final int ptsValue = rawPts is num
+                                    ? rawPts.toInt()
+                                    : int.tryParse(rawPts.toString()) ?? 0;
+                                final bool isPositive = ptsValue > 0;
+                                final dynamic rawDateTime =
+                                    filteredData[index]['dateTime'];
+                                final DateTime dateTime =
+                                    rawDateTime is Timestamp
+                                    ? rawDateTime.toDate()
+                                    : rawDateTime is DateTime
+                                    ? rawDateTime
+                                    : DateTime.fromMillisecondsSinceEpoch(0);
+
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                  margin: const EdgeInsets.only(bottom: 15),
+                                  child: Container(
+                                    width: cardWidth,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.05,
+                                          ),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(isWeb ? 20 : 15),
+                                      child: Row(
+                                        children: [
+                                          // Transaction Icon
+                                          Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: isPositive
+                                                  ? Colors.green.withValues(
+                                                      alpha: 0.1,
+                                                    )
+                                                  : Colors.red.withValues(
+                                                      alpha: 0.1,
+                                                    ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Icon(
+                                              isPositive
+                                                  ? Icons.arrow_downward
+                                                  : Icons.arrow_upward,
+                                              color: isPositive
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                              size: isWeb ? 24 : 20,
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 15),
+
+                                          // Transaction Details
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                TextWidget(
+                                                  text:
+                                                      filteredData[index]['type'] ??
+                                                      'Transaction',
+                                                  fontSize: isWeb ? 16 : 14,
+                                                  fontFamily: 'Medium',
+                                                  color: Colors.black87,
+                                                ),
+                                                const SizedBox(height: 5),
+                                                TextWidget(
+                                                  text: DateFormat.yMMMd()
+                                                      .add_jm()
+                                                      .format(dateTime),
+                                                  fontSize: isWeb ? 12 : 10,
+                                                  color: grey,
+                                                  fontFamily: 'Regular',
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          // Amount
+                                          TextWidget(
+                                            text:
+                                                '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
+                                            fontSize: isWeb ? 18 : 16,
+                                            fontFamily: 'Bold',
+                                            color: isPositive
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }, childCount: filteredData.length),
+                            ),
+                          );
+                        },
                   ),
 
                   // Bottom padding
@@ -763,12 +771,17 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        if (pts.text.isNotEmpty) {
-                          scanQRCode();
-                          Navigator.of(context).pop();
-                        } else {
-                          showToast('Please enter an amount');
+                        final int? amount = int.tryParse(pts.text.trim());
+                        if (amount == null || amount <= 0) {
+                          showToast(
+                            'Please enter a valid amount',
+                            type: ToastType.error,
+                          );
+                          return;
                         }
+
+                        Navigator.of(context).pop();
+                        scanQRCode(amount);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
@@ -798,9 +811,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
   String qrCode = 'Unknown';
 
-  Future<void> scanQRCode() async {
+  Future<void> scanQRCode(int amount) async {
+    bool loadingShown = false;
+
     try {
-      final qrCode = await FlutterBarcodeScanner.scanBarcode(
+      final scannedCode = await FlutterBarcodeScanner.scanBarcode(
         '#ff6666',
         'Cancel',
         true,
@@ -808,6 +823,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
       );
 
       if (!context.mounted) return;
+
+      if (scannedCode == '-1' || scannedCode.trim().isEmpty) {
+        showToast('Transfer cancelled', type: ToastType.info);
+        return;
+      }
 
       showDialog(
         context: context,
@@ -843,118 +863,150 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
           );
         },
       );
+      loadingShown = true;
 
       if (!mounted) return;
 
-      setState(() {
-        this.qrCode = qrCode;
+      qrCode = scannedCode;
+
+      final coordinatorRef = FirebaseFirestore.instance
+          .collection('Coordinator')
+          .doc(FirebaseAuth.instance.currentUser!.uid);
+      final targetRef = FirebaseFirestore.instance
+          .collection(selected)
+          .doc(scannedCode);
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final coordinatorSnap = await transaction.get(coordinatorRef);
+        final targetSnap = await transaction.get(targetRef);
+
+        if (!targetSnap.exists) {
+          throw Exception('Recipient does not exist');
+        }
+
+        final int currentWallet = (coordinatorSnap.data()?['wallet'] is num)
+            ? (coordinatorSnap.data()!['wallet'] as num).toInt()
+            : 0;
+
+        if (currentWallet < amount) {
+          throw Exception('Insufficient wallet balance');
+        }
+
+        transaction.update(targetRef, {'wallet': FieldValue.increment(amount)});
+        transaction.update(coordinatorRef, {
+          'wallet': FieldValue.increment(-amount),
+        });
       });
 
-      final DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance
-          .collection('Coordinator')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .get();
+      final String referenceId = await addWallet(
+        amount,
+        scannedCode,
+        FirebaseAuth.instance.currentUser!.uid,
+        'Receive & Transfers',
+        '',
+      );
 
       if (!context.mounted) return;
+      if (loadingShown) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loadingShown = false;
+      }
 
-      if (documentSnapshot['wallet'] > int.parse(pts.text)) {
-        await FirebaseFirestore.instance
-            .collection(selected)
-            .doc(qrCode)
-            .update({'wallet': FieldValue.increment(int.parse(pts.text))});
-        await FirebaseFirestore.instance
-            .collection('Coordinator')
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .update({'wallet': FieldValue.increment(-int.parse(pts.text))});
+      pts.clear();
 
-        // Add transaction
-        addWallet(
-          int.parse(pts.text),
-          qrCode,
-          FirebaseAuth.instance.currentUser!.uid,
-          'Receive & Transfers',
-          '',
-        );
-
-        // Close loading dialog
-        Navigator.of(context).pop();
-
-        // Show success dialog
-        if (!context.mounted) return;
-
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(30),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF4CAF50),
+                    size: 50,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextWidget(
+                  text: 'Transfer Successful!',
+                  fontSize: 20,
+                  fontFamily: 'Bold',
+                  color: primary,
+                ),
+                const SizedBox(height: 10),
+                TextWidget(
+                  text:
+                      'You have successfully transferred ${AppConstants.formatNumberWithPeso(amount)}',
+                  fontSize: 16,
+                  color: grey,
+                  fontFamily: 'Regular',
+                  align: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                TextWidget(
+                  text: 'Reference: $referenceId',
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontFamily: 'Medium',
+                ),
+                const SizedBox(height: 25),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 12,
                     ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF4CAF50),
-                      size: 50,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  TextWidget(
-                    text: 'Transfer Successful!',
-                    fontSize: 20,
-                    fontFamily: 'Bold',
-                    color: primary,
-                  ),
-                  const SizedBox(height: 10),
-                  TextWidget(
-                    text:
-                        'You have successfully transferred ${AppConstants.formatNumberWithPeso(int.parse(pts.text))}',
+                  child: TextWidget(
+                    text: 'Done',
                     fontSize: 16,
-                    color: grey,
-                    fontFamily: 'Regular',
-                    align: TextAlign.center,
+                    color: Colors.white,
+                    fontFamily: 'Medium',
                   ),
-                  const SizedBox(height: 25),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                    child: TextWidget(
-                      text: 'Done',
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontFamily: 'Medium',
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        );
-      } else {
-        if (context.mounted) {
-          Navigator.of(context).pop(); // Close loading dialog
-        }
-        showToast('Your wallet balance is not enough!');
-      }
+        ),
+      );
+
+      showToast('Transfer completed', type: ToastType.success);
     } on PlatformException {
-      qrCode = 'Failed to get platform version.';
+      showToast(
+        'QR scanner is unavailable on this device',
+        type: ToastType.error,
+      );
+    } catch (e) {
+      if (context.mounted && loadingShown) {
+        Navigator.of(context, rootNavigator: true).pop();
+        loadingShown = false;
+      }
+
+      final String error = e.toString().toLowerCase();
+      if (error.contains('insufficient wallet balance')) {
+        showToast('Your wallet balance is not enough!', type: ToastType.error);
+      } else if (error.contains('recipient does not exist')) {
+        showToast('Recipient account was not found', type: ToastType.error);
+      } else {
+        showToast('Transfer failed. Please try again.', type: ToastType.error);
+      }
     }
   }
 }

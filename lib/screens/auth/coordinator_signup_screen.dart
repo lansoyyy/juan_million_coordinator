@@ -75,12 +75,8 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
           child: AlertDialog(
             title: Row(
               children: [
-                CircularProgressIndicator(
-                  color: Colors.black,
-                ),
-                SizedBox(
-                  width: 20,
-                ),
+                CircularProgressIndicator(color: Colors.black),
+                SizedBox(width: 20),
                 Text(
                   'Uploading . . .',
                   style: TextStyle(
@@ -96,16 +92,15 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
       );
 
       try {
-        final ref = firebase_storage.FirebaseStorage.instance
-            .ref('CoordinatorDocs/$docType/$fileName');
+        final ref = firebase_storage.FirebaseStorage.instance.ref(
+          'CoordinatorDocs/$docType/$fileName',
+        );
         final bytes = pickedFile.bytes!;
         final contentType = _getContentTypeFromExtension(fileName);
 
         await ref.putData(
           bytes,
-          firebase_storage.SettableMetadata(
-            contentType: contentType,
-          ),
+          firebase_storage.SettableMetadata(contentType: contentType),
         );
 
         final downloadUrl = await ref.getDownloadURL();
@@ -164,32 +159,47 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
     try {
       final email = '${username.text.trim()}@coordinator.com';
 
-      final userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password.text,
-      );
+      Map<String, dynamic> defaults = <String, dynamic>{};
+      try {
+        final defaultsDoc = await FirebaseFirestore.instance
+            .collection('AdminConfig')
+            .doc('SignupDefaults')
+            .get();
+        defaults = defaultsDoc.data() ?? <String, dynamic>{};
+      } catch (_) {}
+
+      final int initialWallet = (defaults['coordinatorInitialWallet'] is num)
+          ? (defaults['coordinatorInitialWallet'] as num).toInt()
+          : 0;
+      final bool autoApproved = defaults['coordinatorAutoApproved'] == true;
+
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: email,
+            password: password.text,
+          );
 
       await FirebaseFirestore.instance
           .collection('Coordinator')
           .doc(userCredential.user!.uid)
           .set({
-        'name': name.text.trim(),
-        'email': email,
-        'wallet': 0,
-        'dtiSecUrl': dtiUrl,
-        'contractUrl': contractUrl,
-        'govIdUrl': idUrl,
-        'approved': false,
-        'createdAt': DateTime.now(),
-      });
+            'name': name.text.trim(),
+            'email': email,
+            'wallet': initialWallet,
+            'dtiSecUrl': dtiUrl,
+            'contractUrl': contractUrl,
+            'govIdUrl': idUrl,
+            'approved': autoApproved,
+            'createdAt': DateTime.now(),
+          });
 
       await FirebaseAuth.instance.signOut();
 
       if (!mounted) return;
 
       showToast(
-          'Registration submitted. Please wait for admin approval, then log in.');
+        'Registration submitted. Please wait for admin approval, then log in.',
+      );
 
       Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
@@ -222,25 +232,16 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(
-                height: 40,
-              ),
-              Image.asset(
-                'assets/images/Juan4All 2.png',
-                height: 160,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 40),
+              Image.asset('assets/images/Juan4All 2.png', height: 160),
+              const SizedBox(height: 10),
               TextWidget(
                 text: 'Coordinator Registration',
                 fontSize: 28,
                 fontFamily: 'Bold',
                 color: primary,
               ),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               TextFieldWidget(
                 fontStyle: FontStyle.normal,
                 hint: 'Full Name',
@@ -252,9 +253,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 controller: name,
                 label: 'Full Name',
               ),
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               TextFieldWidget(
                 fontStyle: FontStyle.normal,
                 hint: 'Username',
@@ -266,9 +265,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 controller: username,
                 label: 'Username',
               ),
-              const SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 15),
               TextFieldWidget(
                 showEye: true,
                 isObscure: true,
@@ -282,9 +279,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 controller: password,
                 label: 'Password',
               ),
-              const SizedBox(
-                height: 25,
-              ),
+              const SizedBox(height: 25),
               _buildUploadCard(
                 title: 'DTI or SEC Registration',
                 description:
@@ -305,9 +300,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 isUploaded: idUrl.isNotEmpty,
                 onPressed: () => uploadDocument('id'),
               ),
-              const SizedBox(
-                height: 25,
-              ),
+              const SizedBox(height: 25),
               ButtonWidget(
                 width: 350,
                 label: isSubmitting ? 'Submitting...' : 'Register',
@@ -316,9 +309,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                   registerCoordinator(context);
                 },
               ),
-              const SizedBox(
-                height: 40,
-              ),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -359,9 +350,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 fontFamily: 'Bold',
                 color: blue,
               ),
-              const SizedBox(
-                height: 6,
-              ),
+              const SizedBox(height: 6),
               TextWidget(
                 text: description,
                 fontSize: 12,
@@ -369,9 +358,7 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 color: Colors.grey,
                 maxLines: 3,
               ),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

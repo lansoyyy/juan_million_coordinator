@@ -90,6 +90,7 @@ class CustomerPointsPage extends StatelessWidget {
                                 .where('scannedId',
                                     isEqualTo:
                                         FirebaseAuth.instance.currentUser!.uid)
+                            .orderBy('dateTime', descending: true)
                                 .snapshots(),
                             builder: (BuildContext context,
                                 AsyncSnapshot<QuerySnapshot> snapshot) {

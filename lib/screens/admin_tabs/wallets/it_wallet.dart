@@ -52,6 +52,7 @@ class _ITWalletState extends State<ITWallet> {
                 StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('History')
+                    .orderBy('dateTime', descending: true)
                         .snapshots(),
                     builder: (BuildContext context,
                         AsyncSnapshot<QuerySnapshot> snapshot) {

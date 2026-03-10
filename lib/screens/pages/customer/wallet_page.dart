@@ -12,6 +12,7 @@ import 'package:juan_million/utlis/colors.dart';
 import 'package:juan_million/widgets/text_widget.dart';
 import 'package:juan_million/widgets/textfield_widget.dart';
 import 'package:juan_million/widgets/toast_widget.dart';
+import 'package:juan_million/widgets/transaction_receipt_dialog.dart';
 
 class CustomerWalletPage extends StatefulWidget {
   const CustomerWalletPage({super.key});
@@ -216,6 +217,7 @@ class _CustomerWalletPageState extends State<CustomerWalletPage> {
                                 .where('uid',
                                     isEqualTo:
                                         FirebaseAuth.instance.currentUser!.uid)
+                            .orderBy('dateTime', descending: true)
                                 .snapshots(),
                             builder: (BuildContext context,
                                 AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -243,6 +245,11 @@ class _CustomerWalletPageState extends State<CustomerWalletPage> {
                                     return Padding(
                                       padding: const EdgeInsets.all(5.0),
                                       child: ListTile(
+                                        onTap: () {
+                                          TransactionReceiptDialog
+                                              .showWalletReceipt(
+                                                  context, data.docs[index]);
+                                        },
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                             15,
@@ -275,6 +282,20 @@ class _CustomerWalletPageState extends State<CustomerWalletPage> {
                                                   'Received ${data.docs[index]['pts']} amount',
                                               fontSize: 16,
                                               color: Colors.black,
+                                              fontFamily: 'Medium',
+                                            ),
+                                            TextWidget(
+                                              text:
+                                                  'Ref: ${data.docs[index]['id'] ?? data.docs[index].id}',
+                                              fontSize: 11,
+                                              color: Colors.grey,
+                                              fontFamily: 'Medium',
+                                            ),
+                                            TextWidget(
+                                              text:
+                                                  '${data.docs[index]['type'] ?? 'Receive & Transfers'}',
+                                              fontSize: 11,
+                                              color: Colors.grey,
                                               fontFamily: 'Medium',
                                             ),
                                           ],

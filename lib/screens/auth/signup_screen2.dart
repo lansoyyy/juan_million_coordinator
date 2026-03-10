@@ -43,10 +43,11 @@ class _SignupScreen2State extends State<SignupScreen2> {
     XFile pickedImage;
     try {
       pickedImage = (await picker.pickImage(
-          source: inputSource == 'camera'
-              ? ImageSource.camera
-              : ImageSource.gallery,
-          maxWidth: 1920))!;
+        source: inputSource == 'camera'
+            ? ImageSource.camera
+            : ImageSource.gallery,
+        maxWidth: 1920,
+      ))!;
 
       fileName = path.basename(pickedImage.path);
       imageFile = File(pickedImage.path);
@@ -58,23 +59,21 @@ class _SignupScreen2State extends State<SignupScreen2> {
           builder: (BuildContext context) => const Padding(
             padding: EdgeInsets.only(left: 30, right: 30),
             child: AlertDialog(
-                title: Row(
-              children: [
-                CircularProgressIndicator(
-                  color: Colors.black,
-                ),
-                SizedBox(
-                  width: 20,
-                ),
-                Text(
-                  'Loading . . .',
-                  style: TextStyle(
+              title: Row(
+                children: [
+                  CircularProgressIndicator(color: Colors.black),
+                  SizedBox(width: 20),
+                  Text(
+                    'Loading . . .',
+                    style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'QRegular'),
-                ),
-              ],
-            )),
+                      fontFamily: 'QRegular',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
 
@@ -109,9 +108,7 @@ class _SignupScreen2State extends State<SignupScreen2> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(
-                height: 50,
-              ),
+              const SizedBox(height: 50),
               CircleAvatar(
                 maxRadius: 75,
                 minRadius: 75,
@@ -128,9 +125,7 @@ class _SignupScreen2State extends State<SignupScreen2> {
                   color: primary,
                 ),
               ),
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
               TextFieldWidget(
                 fontStyle: FontStyle.normal,
                 hint: 'Business Address',
@@ -142,9 +137,7 @@ class _SignupScreen2State extends State<SignupScreen2> {
                 controller: address,
                 label: 'Business Address',
               ),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               TextFieldWidget(
                 fontStyle: FontStyle.normal,
                 hint: 'Business Description',
@@ -157,9 +150,7 @@ class _SignupScreen2State extends State<SignupScreen2> {
                 controller: desc,
                 label: 'Business Description',
               ),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               TextFieldWidget(
                 prefixIcon: Icons.info_outline,
                 fontStyle: FontStyle.normal,
@@ -170,9 +161,7 @@ class _SignupScreen2State extends State<SignupScreen2> {
                 controller: clarification,
                 label: 'Clarification',
               ),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               TextFieldWidget(
                 prefixIcon: Icons.person,
                 fontStyle: FontStyle.normal,
@@ -180,36 +169,43 @@ class _SignupScreen2State extends State<SignupScreen2> {
                 borderColor: blue,
                 radius: 12,
                 width: 350,
-                controller: clarification,
+                controller: rep,
                 label: 'Business Representative',
               ),
-              const SizedBox(
-                height: 30,
-              ),
+              const SizedBox(height: 30),
               ButtonWidget(
                 width: 350,
                 label: 'Next',
                 onPressed: () async {
+                  if (clarification.text.trim().isEmpty ||
+                      rep.text.trim().isEmpty) {
+                    showToast(
+                      'Clarification and representative are required.',
+                      type: ToastType.error,
+                    );
+                    return;
+                  }
+
                   await FirebaseFirestore.instance
                       .collection('Business')
                       .doc(widget.id)
                       .update({
-                    'logo': imageURL,
-                    'address': address.text,
-                    'desc': desc.text,
-                    'clarification': clarification.text,
-                    'representative': rep.text,
-                  }).whenComplete(() {
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) => StorePage(
-                              inbusiness: true,
-                            )));
-                  });
+                        'logo': imageURL,
+                        'address': address.text.trim(),
+                        'desc': desc.text.trim(),
+                        'clarification': clarification.text.trim(),
+                        'representative': rep.text.trim(),
+                      })
+                      .whenComplete(() {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => StorePage(inbusiness: true),
+                          ),
+                        );
+                      });
                 },
               ),
-              const SizedBox(
-                height: 50,
-              ),
+              const SizedBox(height: 50),
             ],
           ),
         ),

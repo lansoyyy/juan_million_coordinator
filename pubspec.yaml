@@ -45,6 +45,7 @@ dependencies:
   # qr_code_scanner: ^1.0.0
   # flutter_barcode_scanner:
   flutter_barcode_scanner_plus:
+  universal_html: ^2.2.4
   paymongo_sdk:
   image_picker:
   file_picker:

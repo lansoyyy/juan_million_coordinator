@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
 import 'package:juan_million/utlis/colors.dart';
+import 'package:juan_million/widgets/qr_download_helper.dart';
 import 'package:juan_million/widgets/text_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -98,6 +99,27 @@ class _MyQRBusinessPageState extends State<MyQRBusinessPage> {
                             fontSize: 18,
                             color: Colors.white,
                             fontFamily: 'Bold',
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Center(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await downloadQrAsPng(
+                                context,
+                                data: mydata.id,
+                                fileName:
+                                    'business_qr_${mydata.id.toString().substring(0, 6)}',
+                              );
+                            },
+                            icon: const Icon(Icons.download),
+                            label: const Text('Download QR'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: blue,
+                            ),
                           ),
                         ),
                         Center(
