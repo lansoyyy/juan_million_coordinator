@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner_plus/flutter_barcode_scanner_plus.dart';
@@ -731,8 +732,9 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextWidget(
-                        text:
-                            'You will need to scan the affiliate\'s QR code after entering the amount',
+                        text: kIsWeb
+                            ? 'Enter or paste the affiliate QR/account ID after entering the amount'
+                            : 'You will need to scan the affiliate\'s QR code after entering the amount',
                         fontSize: isWeb ? 14 : 12,
                         color: primary,
                         fontFamily: 'Regular',
@@ -781,7 +783,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         }
 
                         Navigator.of(context).pop();
-                        scanQRCode(amount);
+                        if (kIsWeb) {
+                          _showRecipientCodeDialog(amount);
+                        } else {
+                          scanQRCode(amount);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
@@ -793,7 +799,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         ),
                       ),
                       child: TextWidget(
-                        text: 'Continue to QR Scan',
+                        text: kIsWeb ? 'Continue' : 'Continue to QR Scan',
                         fontSize: isWeb ? 16 : 14,
                         color: Colors.white,
                         fontFamily: 'Medium',
@@ -811,9 +817,60 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
   String qrCode = 'Unknown';
 
-  Future<void> scanQRCode(int amount) async {
-    bool loadingShown = false;
+  Future<void> _showRecipientCodeDialog(int amount) async {
+    final codeController = TextEditingController();
 
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: TextWidget(
+            text: 'Enter Affiliate QR Code',
+            fontSize: 18,
+            fontFamily: 'Bold',
+            color: primary,
+          ),
+          content: TextField(
+            controller: codeController,
+            decoration: const InputDecoration(
+              hintText: 'Paste affiliate account ID / QR value',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: TextWidget(text: 'Cancel', fontSize: 14),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final code = codeController.text.trim();
+                if (code.isEmpty) {
+                  showToast(
+                    'Please enter the affiliate QR code',
+                    type: ToastType.error,
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext);
+                _processTransfer(amount, code);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: primary),
+              child: TextWidget(
+                text: 'Proceed',
+                fontSize: 14,
+                fontFamily: 'Bold',
+                color: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> scanQRCode(int amount) async {
     try {
       final scannedCode = await FlutterBarcodeScanner.scanBarcode(
         '#ff6666',
@@ -829,6 +886,19 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
         return;
       }
 
+      await _processTransfer(amount, scannedCode);
+    } on PlatformException {
+      showToast(
+        'QR scanner is unavailable on this device',
+        type: ToastType.error,
+      );
+    }
+  }
+
+  Future<void> _processTransfer(int amount, String scannedCode) async {
+    bool loadingShown = false;
+
+    try {
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -988,11 +1058,6 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
       );
 
       showToast('Transfer completed', type: ToastType.success);
-    } on PlatformException {
-      showToast(
-        'QR scanner is unavailable on this device',
-        type: ToastType.error,
-      );
     } catch (e) {
       if (context.mounted && loadingShown) {
         Navigator.of(context, rootNavigator: true).pop();
