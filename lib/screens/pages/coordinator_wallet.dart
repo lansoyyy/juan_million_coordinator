@@ -733,7 +733,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     Expanded(
                       child: TextWidget(
                         text: kIsWeb
-                            ? 'Enter or paste the affiliate QR/account ID after entering the amount'
+                            ? 'Enter or paste the affiliate QR, account ID, or referral code after entering the amount'
                             : 'You will need to scan the affiliate\'s QR code after entering the amount',
                         fontSize: isWeb ? 14 : 12,
                         color: primary,
@@ -825,7 +825,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
       builder: (dialogContext) {
         return AlertDialog(
           title: TextWidget(
-            text: 'Enter Affiliate QR Code',
+            text: 'Enter Affiliate Code',
             fontSize: 18,
             fontFamily: 'Bold',
             color: primary,
@@ -833,7 +833,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
           content: TextField(
             controller: codeController,
             decoration: const InputDecoration(
-              hintText: 'Paste affiliate account ID / QR value',
+              hintText: 'Paste affiliate account ID, QR value, or referral code',
               border: OutlineInputBorder(),
             ),
           ),
@@ -937,14 +937,17 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
       if (!mounted) return;
 
-      qrCode = scannedCode;
+        qrCode = scannedCode;
+
+        final String resolvedRecipientId =
+          await _resolveBusinessRecipientId(scannedCode.trim());
 
       final coordinatorRef = FirebaseFirestore.instance
           .collection('Coordinator')
           .doc(FirebaseAuth.instance.currentUser!.uid);
       final targetRef = FirebaseFirestore.instance
           .collection(selected)
-          .doc(scannedCode);
+          .doc(resolvedRecipientId);
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final coordinatorSnap = await transaction.get(coordinatorRef);
@@ -970,7 +973,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
       final String referenceId = await addWallet(
         amount,
-        scannedCode,
+        resolvedRecipientId,
         FirebaseAuth.instance.currentUser!.uid,
         'Receive & Transfers',
         '',
@@ -1073,5 +1076,32 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
         showToast('Transfer failed. Please try again.', type: ToastType.error);
       }
     }
+  }
+
+  Future<String> _resolveBusinessRecipientId(String rawCode) async {
+    final directDoc = await FirebaseFirestore.instance
+        .collection('Business')
+        .doc(rawCode)
+        .get();
+    if (directDoc.exists) {
+      return rawCode;
+    }
+
+    final referralMatches = await FirebaseFirestore.instance
+        .collection('Referals')
+        .where('ref', isEqualTo: rawCode)
+        .limit(1)
+        .get();
+
+    if (referralMatches.docs.isNotEmpty) {
+      final data = referralMatches.docs.first.data() as Map<String, dynamic>;
+      final dynamic type = data['type'];
+      final dynamic uid = data['uid'];
+      if (type == 'Business' && uid is String && uid.isNotEmpty) {
+        return uid;
+      }
+    }
+
+    throw Exception('Recipient does not exist');
   }
 }
