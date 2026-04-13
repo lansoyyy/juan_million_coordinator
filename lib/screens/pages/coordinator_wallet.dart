@@ -833,7 +833,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
           content: TextField(
             controller: codeController,
             decoration: const InputDecoration(
-              hintText: 'Paste affiliate account ID, QR value, or referral code',
+              hintText:
+                  'Paste affiliate account ID, QR value, or referral code',
               border: OutlineInputBorder(),
             ),
           ),
@@ -937,10 +938,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
       if (!mounted) return;
 
-        qrCode = scannedCode;
+      qrCode = scannedCode;
 
-        final String resolvedRecipientId =
-          await _resolveBusinessRecipientId(scannedCode.trim());
+      final String resolvedRecipientId = await _resolveBusinessRecipientId(
+        scannedCode.trim(),
+      );
 
       final coordinatorRef = FirebaseFirestore.instance
           .collection('Coordinator')
@@ -1079,6 +1081,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
   }
 
   Future<String> _resolveBusinessRecipientId(String rawCode) async {
+    // 1. Try direct Business document ID lookup
     final directDoc = await FirebaseFirestore.instance
         .collection('Business')
         .doc(rawCode)
@@ -1087,6 +1090,17 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
       return rawCode;
     }
 
+    // 2. Try Business collection where 'ref' field == rawCode
+    final businessByRef = await FirebaseFirestore.instance
+        .collection('Business')
+        .where('ref', isEqualTo: rawCode)
+        .limit(1)
+        .get();
+    if (businessByRef.docs.isNotEmpty) {
+      return businessByRef.docs.first.id;
+    }
+
+    // 3. Try Referals collection lookup
     final referralMatches = await FirebaseFirestore.instance
         .collection('Referals')
         .where('ref', isEqualTo: rawCode)
@@ -1095,9 +1109,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
     if (referralMatches.docs.isNotEmpty) {
       final data = referralMatches.docs.first.data() as Map<String, dynamic>;
-      final dynamic type = data['type'];
       final dynamic uid = data['uid'];
-      if (type == 'Business' && uid is String && uid.isNotEmpty) {
+      if (uid is String && uid.isNotEmpty) {
         return uid;
       }
     }

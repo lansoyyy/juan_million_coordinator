@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
@@ -23,9 +25,10 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
   final username = TextEditingController();
   final password = TextEditingController();
 
-  String dtiUrl = '';
-  String contractUrl = '';
-  String idUrl = '';
+  // Store picked files locally — upload happens after auth is created
+  PlatformFile? _dtiFile;
+  PlatformFile? _contractFile;
+  PlatformFile? _idFile;
 
   bool isSubmitting = false;
 
@@ -48,7 +51,8 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
     }
   }
 
-  Future<void> uploadDocument(String docType) async {
+  /// Pick a file and store it locally — no upload until registration.
+  Future<void> pickDocument(String docType) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         withData: true,
@@ -56,87 +60,54 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
       );
 
-      if (result == null || result.files.isEmpty) {
-        return;
-      }
+      if (result == null || result.files.isEmpty) return;
 
       final pickedFile = result.files.single;
-      if (pickedFile.bytes == null) {
+
+      // On web bytes is populated; on mobile fall back to reading from path.
+      if (pickedFile.bytes == null && pickedFile.path == null) {
+        showToast('Could not read file. Please try again.');
         return;
       }
 
-      final fileName = pickedFile.name;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) => const Padding(
-          padding: EdgeInsets.only(left: 30, right: 30),
-          child: AlertDialog(
-            title: Row(
-              children: [
-                CircularProgressIndicator(color: Colors.black),
-                SizedBox(width: 20),
-                Text(
-                  'Uploading . . .',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'QRegular',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      try {
-        final ref = firebase_storage.FirebaseStorage.instance.ref(
-          'CoordinatorDocs/$docType/$fileName',
-        );
-        final bytes = pickedFile.bytes!;
-        final contentType = _getContentTypeFromExtension(fileName);
-
-        await ref.putData(
-          bytes,
-          firebase_storage.SettableMetadata(contentType: contentType),
-        );
-
-        final downloadUrl = await ref.getDownloadURL();
-
-        if (!mounted) return;
-
-        setState(() {
-          if (docType == 'dti') {
-            dtiUrl = downloadUrl;
-          } else if (docType == 'contract') {
-            contractUrl = downloadUrl;
-          } else if (docType == 'id') {
-            idUrl = downloadUrl;
-          }
-        });
-
-        Navigator.of(context).pop();
-        showToast('File uploaded!');
-      } on firebase_storage.FirebaseException catch (error) {
-        if (kDebugMode) {
-          print(error);
+      if (!mounted) return;
+      setState(() {
+        if (docType == 'dti') {
+          _dtiFile = pickedFile;
+        } else if (docType == 'contract') {
+          _contractFile = pickedFile;
+        } else if (docType == 'id') {
+          _idFile = pickedFile;
         }
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-        showToast('Failed to upload file.');
-      }
+      });
     } catch (err) {
-      if (kDebugMode) {
-        print(err);
-      }
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-      showToast('Failed to upload file.');
+      if (kDebugMode) print(err);
+      showToast('Failed to select file. Please try again.');
     }
+  }
+
+  /// Upload a single PlatformFile to Firebase Storage and return its download URL.
+  Future<String> _uploadFile(PlatformFile file, String storagePath) async {
+    Uint8List? bytes = file.bytes;
+
+    // On mobile, bytes may be null — read from path instead.
+    if (bytes == null && file.path != null && !kIsWeb) {
+      bytes = await File(file.path!).readAsBytes();
+    }
+
+    if (bytes == null) {
+      throw Exception('Could not read file bytes for ${file.name}');
+    }
+
+    final contentType = _getContentTypeFromExtension(file.name);
+    final ref = firebase_storage.FirebaseStorage.instance.ref(storagePath);
+
+    await ref.putData(
+      bytes,
+      firebase_storage.SettableMetadata(contentType: contentType),
+    );
+
+    return await ref.getDownloadURL();
   }
 
   Future<void> registerCoordinator(BuildContext context) async {
@@ -147,14 +118,45 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
       return;
     }
 
-    if (dtiUrl.isEmpty || contractUrl.isEmpty || idUrl.isEmpty) {
-      showToast('Please upload all required documents.');
+    if (_dtiFile == null || _contractFile == null || _idFile == null) {
+      showToast('Please select all required documents before registering.');
       return;
     }
 
     setState(() {
       isSubmitting = true;
     });
+
+    // Show uploading dialog
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) => const Padding(
+        padding: EdgeInsets.only(left: 30, right: 30),
+        child: AlertDialog(
+          title: Row(
+            children: [
+              CircularProgressIndicator(color: Colors.black),
+              SizedBox(width: 20),
+              Expanded(
+                child: Text(
+                  'Uploading documents & registering...',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'QRegular',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    UserCredential? userCredential;
 
     try {
       final email = '${username.text.trim()}@coordinator.com';
@@ -173,36 +175,65 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
           : 0;
       final bool autoApproved = defaults['coordinatorAutoApproved'] == true;
 
-      final userCredential = await FirebaseAuth.instance
+      // Step 1: Create Firebase Auth account so we are authenticated for Storage.
+      userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: email,
             password: password.text,
           );
 
-      await FirebaseFirestore.instance
-          .collection('Coordinator')
-          .doc(userCredential.user!.uid)
-          .set({
-            'name': name.text.trim(),
-            'email': email,
-            'wallet': initialWallet,
-            'dtiSecUrl': dtiUrl,
-            'contractUrl': contractUrl,
-            'govIdUrl': idUrl,
-            'approved': autoApproved,
-            'createdAt': DateTime.now(),
-          });
+      final uid = userCredential.user!.uid;
 
+      // Step 2: Upload documents now that the user is authenticated.
+      final String dtiUrl = await _uploadFile(
+        _dtiFile!,
+        'CoordinatorDocs/dti/${uid}_${_dtiFile!.name}',
+      );
+      final String contractUrl = await _uploadFile(
+        _contractFile!,
+        'CoordinatorDocs/contract/${uid}_${_contractFile!.name}',
+      );
+      final String idUrl = await _uploadFile(
+        _idFile!,
+        'CoordinatorDocs/id/${uid}_${_idFile!.name}',
+      );
+
+      // Step 3: Create Firestore document.
+      await FirebaseFirestore.instance.collection('Coordinator').doc(uid).set({
+        'name': name.text.trim(),
+        'email': email,
+        'wallet': initialWallet,
+        'dtiSecUrl': dtiUrl,
+        'contractUrl': contractUrl,
+        'govIdUrl': idUrl,
+        'approved': autoApproved,
+        'createdAt': DateTime.now(),
+      });
+
+      // Step 4: Sign out — account awaits admin approval.
       await FirebaseAuth.instance.signOut();
 
       if (!mounted) return;
+
+      // Dismiss uploading dialog.
+      if (navigator.canPop()) navigator.pop();
 
       showToast(
         'Registration submitted. Please wait for admin approval, then log in.',
       );
 
-      Navigator.of(context).pop();
+      navigator.pop();
     } on FirebaseAuthException catch (e) {
+      if (navigator.canPop()) navigator.pop();
+
+      // If the account was created but upload failed, clean up the auth account.
+      if (userCredential != null) {
+        try {
+          await userCredential.user?.delete();
+        } catch (_) {}
+        await FirebaseAuth.instance.signOut();
+      }
+
       if (e.code == 'weak-password') {
         showToast('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
@@ -212,8 +243,31 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
       } else {
         showToast(e.message ?? 'Registration failed.');
       }
+    } on firebase_storage.FirebaseException catch (e) {
+      if (navigator.canPop()) navigator.pop();
+
+      // Clean up the created auth account since documents failed to upload.
+      if (userCredential != null) {
+        try {
+          await userCredential.user?.delete();
+        } catch (_) {}
+        await FirebaseAuth.instance.signOut();
+      }
+
+      if (kDebugMode) print('Storage error: ${e.code} — ${e.message}');
+      showToast('Failed to upload documents. Please try again.');
     } catch (e) {
-      showToast('An error occurred during registration.');
+      if (navigator.canPop()) navigator.pop();
+
+      if (userCredential != null) {
+        try {
+          await userCredential.user?.delete();
+        } catch (_) {}
+        await FirebaseAuth.instance.signOut();
+      }
+
+      if (kDebugMode) print('Registration error: $e');
+      showToast('An error occurred during registration. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -284,21 +338,21 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
                 title: 'DTI or SEC Registration',
                 description:
                     'Upload a clear photo or scan of your DTI/SEC document.',
-                isUploaded: dtiUrl.isNotEmpty,
-                onPressed: () => uploadDocument('dti'),
+                selectedFile: _dtiFile,
+                onPressed: () => pickDocument('dti'),
               ),
               _buildUploadCard(
                 title: 'Signed Contract',
                 description: 'Upload the signed coordinator contract.',
-                isUploaded: contractUrl.isNotEmpty,
-                onPressed: () => uploadDocument('contract'),
+                selectedFile: _contractFile,
+                onPressed: () => pickDocument('contract'),
               ),
               _buildUploadCard(
                 title: 'Valid Government ID',
                 description:
                     'Upload a clear photo of your valid government ID.',
-                isUploaded: idUrl.isNotEmpty,
-                onPressed: () => uploadDocument('id'),
+                selectedFile: _idFile,
+                onPressed: () => pickDocument('id'),
               ),
               const SizedBox(height: 25),
               ButtonWidget(
@@ -320,9 +374,10 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
   Widget _buildUploadCard({
     required String title,
     required String description,
-    required bool isUploaded,
+    required PlatformFile? selectedFile,
     required VoidCallback onPressed,
   }) {
+    final bool hasFile = selectedFile != null;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Container(
@@ -330,10 +385,10 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: blue.withOpacity(0.3)),
+          border: Border.all(color: blue.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -362,28 +417,35 @@ class _CoordinatorSignupScreenState extends State<CoordinatorSignupScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        isUploaded
-                            ? Icons.check_circle
-                            : Icons.cloud_upload_outlined,
-                        color: isUploaded ? primary : blue,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      TextWidget(
-                        text: isUploaded ? 'File uploaded' : 'No file uploaded',
-                        fontSize: 12,
-                        fontFamily: 'Regular',
-                        color: isUploaded ? primary : Colors.grey,
-                      ),
-                    ],
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          hasFile
+                              ? Icons.check_circle
+                              : Icons.cloud_upload_outlined,
+                          color: hasFile ? primary : blue,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TextWidget(
+                            text: hasFile
+                                ? selectedFile.name
+                                : 'No file selected',
+                            fontSize: 12,
+                            fontFamily: 'Regular',
+                            color: hasFile ? primary : Colors.grey,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   TextButton(
                     onPressed: onPressed,
                     child: TextWidget(
-                      text: isUploaded ? 'Re-upload' : 'Upload',
+                      text: hasFile ? 'Change' : 'Select',
                       fontSize: 12,
                       fontFamily: 'Bold',
                       color: blue,
