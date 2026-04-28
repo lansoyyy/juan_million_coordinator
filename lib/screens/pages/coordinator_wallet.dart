@@ -22,13 +22,24 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
   final pts = TextEditingController();
   String selected = '';
   bool isHovering = false;
+  late Stream<DocumentSnapshot> _userData;
+  late Stream<QuerySnapshot> _walletStream;
 
   @override
-  Widget build(BuildContext context) {
-    final Stream<DocumentSnapshot> userData = FirebaseFirestore.instance
+  void initState() {
+    super.initState();
+    _userData = FirebaseFirestore.instance
         .collection('Coordinator')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots();
+    _walletStream = FirebaseFirestore.instance
+        .collection('Wallets')
+        .orderBy('dateTime', descending: true)
+        .snapshots();
+  }
+
+  @override
+  Widget build(BuildContext context) {
 
     return Container(
       color: const Color(0xFFF8F9FA),
@@ -41,7 +52,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
               : double.infinity;
 
           return StreamBuilder<DocumentSnapshot>(
-            stream: userData,
+            stream: _userData,
             builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
               if (!snapshot.hasData) {
                 return Center(
@@ -382,10 +393,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
                   // Transaction List
                   StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('Wallets')
-                        .orderBy('dateTime', descending: true)
-                        .snapshots(),
+                    stream: _walletStream,
                     builder:
                         (
                           BuildContext context,
