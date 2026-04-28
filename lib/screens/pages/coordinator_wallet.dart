@@ -40,16 +40,14 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       color: const Color(0xFFF8F9FA),
       child: LayoutBuilder(
         builder: (context, constraints) {
           bool isWeb = constraints.maxWidth > 800;
           double horizontalPadding = isWeb ? 40.0 : 20.0;
-          double cardWidth = isWeb
-              ? constraints.maxWidth * 0.8
-              : double.infinity;
+          double cardWidth =
+              isWeb ? constraints.maxWidth * 0.8 : double.infinity;
 
           return StreamBuilder<DocumentSnapshot>(
             stream: _userData,
@@ -394,209 +392,202 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                   // Transaction List
                   StreamBuilder<QuerySnapshot>(
                     stream: _walletStream,
-                    builder:
-                        (
-                          BuildContext context,
-                          AsyncSnapshot<QuerySnapshot> snapshot,
-                        ) {
-                          if (snapshot.hasError) {
-                            return SliverToBoxAdapter(
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 50),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.error_outline,
-                                        size: 64,
-                                        color: Colors.red[400],
-                                      ),
-                                      const SizedBox(height: 20),
-                                      TextWidget(
-                                        text: 'Error loading transactions',
-                                        fontSize: 18,
-                                        color: Colors.red[400],
-                                      ),
-                                    ],
+                    builder: (
+                      BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot,
+                    ) {
+                      if (snapshot.hasError) {
+                        return SliverToBoxAdapter(
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 50),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: Colors.red[400],
                                   ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return SliverToBoxAdapter(
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 50),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: primary,
+                                  const SizedBox(height: 20),
+                                  TextWidget(
+                                    text: 'Error loading transactions',
+                                    fontSize: 18,
+                                    color: Colors.red[400],
                                   ),
-                                ),
+                                ],
                               ),
-                            );
-                          }
-
-                          final data = snapshot.requireData;
-                          final filteredData = data.docs
-                              .where(
-                                (doc) =>
-                                    doc['uid'] ==
-                                        FirebaseAuth
-                                            .instance
-                                            .currentUser!
-                                            .uid ||
-                                    doc['from'] ==
-                                        FirebaseAuth.instance.currentUser!.uid,
-                              )
-                              .toList();
-
-                          if (filteredData.isEmpty) {
-                            return SliverToBoxAdapter(
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 50),
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.receipt_long,
-                                        size: 64,
-                                        color: grey,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      TextWidget(
-                                        text: 'No transactions found',
-                                        fontSize: 18,
-                                        color: grey,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          return SliverPadding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding,
                             ),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate((
-                                context,
-                                index,
-                              ) {
-                                final dynamic rawPts =
-                                    filteredData[index]['pts'];
-                                final int ptsValue = rawPts is num
-                                    ? rawPts.toInt()
-                                    : int.tryParse(rawPts.toString()) ?? 0;
-                                final bool isPositive = ptsValue > 0;
-                                final dynamic rawDateTime =
-                                    filteredData[index]['dateTime'];
-                                final DateTime dateTime =
-                                    rawDateTime is Timestamp
-                                    ? rawDateTime.toDate()
-                                    : rawDateTime is DateTime
+                          ),
+                        );
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 50),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final data = snapshot.requireData;
+                      final filteredData = data.docs
+                          .where(
+                            (doc) =>
+                                doc['uid'] ==
+                                    FirebaseAuth.instance.currentUser!.uid ||
+                                doc['from'] ==
+                                    FirebaseAuth.instance.currentUser!.uid,
+                          )
+                          .toList();
+
+                      if (filteredData.isEmpty) {
+                        return SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 50),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long,
+                                    size: 64,
+                                    color: grey,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  TextWidget(
+                                    text: 'No transactions found',
+                                    fontSize: 18,
+                                    color: grey,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final dynamic rawPts = filteredData[index]['pts'];
+                            final int ptsValue = rawPts is num
+                                ? rawPts.toInt()
+                                : int.tryParse(rawPts.toString()) ?? 0;
+                            final bool isPositive = ptsValue > 0;
+                            final dynamic rawDateTime =
+                                filteredData[index]['dateTime'];
+                            final DateTime dateTime = rawDateTime is Timestamp
+                                ? rawDateTime.toDate()
+                                : rawDateTime is DateTime
                                     ? rawDateTime
                                     : DateTime.fromMillisecondsSinceEpoch(0);
 
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                  margin: const EdgeInsets.only(bottom: 15),
-                                  child: Container(
-                                    width: cardWidth,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(15),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.05,
-                                          ),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(isWeb ? 20 : 15),
-                                      child: Row(
-                                        children: [
-                                          // Transaction Icon
-                                          Container(
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: isPositive
-                                                  ? Colors.green.withValues(
-                                                      alpha: 0.1,
-                                                    )
-                                                  : Colors.red.withValues(
-                                                      alpha: 0.1,
-                                                    ),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Icon(
-                                              isPositive
-                                                  ? Icons.arrow_downward
-                                                  : Icons.arrow_upward,
-                                              color: isPositive
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              size: isWeb ? 24 : 20,
-                                            ),
-                                          ),
-
-                                          const SizedBox(width: 15),
-
-                                          // Transaction Details
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                TextWidget(
-                                                  text:
-                                                      filteredData[index]['type'] ??
-                                                      'Transaction',
-                                                  fontSize: isWeb ? 16 : 14,
-                                                  fontFamily: 'Medium',
-                                                  color: Colors.black87,
-                                                ),
-                                                const SizedBox(height: 5),
-                                                TextWidget(
-                                                  text: DateFormat.yMMMd()
-                                                      .add_jm()
-                                                      .format(dateTime),
-                                                  fontSize: isWeb ? 12 : 10,
-                                                  color: grey,
-                                                  fontFamily: 'Regular',
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-
-                                          // Amount
-                                          TextWidget(
-                                            text:
-                                                '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
-                                            fontSize: isWeb ? 18 : 16,
-                                            fontFamily: 'Bold',
-                                            color: isPositive
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
-                                        ],
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              margin: const EdgeInsets.only(bottom: 15),
+                              child: Container(
+                                width: cardWidth,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
                                       ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
                                     ),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(isWeb ? 20 : 15),
+                                  child: Row(
+                                    children: [
+                                      // Transaction Icon
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: isPositive
+                                              ? Colors.green.withValues(
+                                                  alpha: 0.1,
+                                                )
+                                              : Colors.red.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          isPositive
+                                              ? Icons.arrow_downward
+                                              : Icons.arrow_upward,
+                                          color: isPositive
+                                              ? Colors.green
+                                              : Colors.red,
+                                          size: isWeb ? 24 : 20,
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 15),
+
+                                      // Transaction Details
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            TextWidget(
+                                              text: filteredData[index]
+                                                      ['type'] ??
+                                                  'Transaction',
+                                              fontSize: isWeb ? 16 : 14,
+                                              fontFamily: 'Medium',
+                                              color: Colors.black87,
+                                            ),
+                                            const SizedBox(height: 5),
+                                            TextWidget(
+                                              text: DateFormat.yMMMd()
+                                                  .add_jm()
+                                                  .format(dateTime),
+                                              fontSize: isWeb ? 12 : 10,
+                                              color: grey,
+                                              fontFamily: 'Regular',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Amount
+                                      TextWidget(
+                                        text:
+                                            '${isPositive ? '+' : ''}${AppConstants.formatNumberWithPeso(ptsValue.abs())}',
+                                        fontSize: isWeb ? 18 : 16,
+                                        fontFamily: 'Bold',
+                                        color: isPositive
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }, childCount: filteredData.length),
-                            ),
-                          );
-                        },
+                                ),
+                              ),
+                            );
+                          }, childCount: filteredData.length),
+                        ),
+                      );
+                    },
                   ),
 
                   // Bottom padding
