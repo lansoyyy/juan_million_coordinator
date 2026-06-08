@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:juan_million/services/add_wallet.dart';
 import 'package:juan_million/utlis/app_constants.dart';
 import 'package:juan_million/utlis/colors.dart';
+import 'package:juan_million/widgets/hover_elevated_button.dart';
 import 'package:juan_million/widgets/text_widget.dart';
 import 'package:juan_million/widgets/toast_widget.dart';
 
@@ -21,7 +22,6 @@ class CoordinatorWallet extends StatefulWidget {
 class _CoordinatorWalletState extends State<CoordinatorWallet> {
   final pts = TextEditingController();
   String selected = '';
-  bool isHovering = false;
   late Stream<DocumentSnapshot> _userData;
   late Stream<QuerySnapshot> _walletStream;
 
@@ -52,18 +52,7 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
           return StreamBuilder<DocumentSnapshot>(
             stream: _userData,
             builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-              if (!snapshot.hasData) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: primary),
-                      const SizedBox(height: 20),
-                      TextWidget(text: 'Loading...', fontSize: 18, color: grey),
-                    ],
-                  ),
-                );
-              } else if (snapshot.hasError) {
+              if (snapshot.hasError) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -82,8 +71,20 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                     ],
                   ),
                 );
-              } else if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator(color: primary));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: primary),
+                      const SizedBox(height: 20),
+                      TextWidget(text: 'Loading...', fontSize: 18, color: grey),
+                    ],
+                  ),
+                );
               }
 
               final docSnapshot = snapshot.data;
@@ -195,47 +196,37 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                           const SizedBox(height: 30),
 
                           // Transfer Button
-                          MouseRegion(
-                            onEnter: (_) => setState(() => isHovering = true),
-                            onExit: (_) => setState(() => isHovering = false),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    selected = 'Business';
-                                  });
-                                  showAmountDialog();
-                                },
-                                icon: const Icon(
-                                  Icons.sync_alt,
-                                  color: Colors.white,
-                                ),
-                                label: TextWidget(
-                                  text: 'Transfer to Affiliate',
-                                  fontSize: isWeb ? 16 : 14,
-                                  color: Colors.white,
-                                  fontFamily: 'Medium',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.2,
+                          HoverElevatedButton(
+                            enableHover: isWeb,
+                            onPressed: () {
+                              selected = 'Business';
+                              showAmountDialog();
+                            },
+                            icon: const Icon(
+                              Icons.sync_alt,
+                              color: Colors.white,
+                            ),
+                            label: 'Transfer to Affiliate',
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.2,
+                              ),
+                              foregroundColor: Colors.white,
+                              textStyle: TextStyle(
+                                fontFamily: 'Medium',
+                                fontSize: isWeb ? 16 : 14,
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isWeb ? 30 : 25,
+                                vertical: isWeb ? 15 : 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                side: BorderSide(
+                                  color: Colors.white.withValues(
+                                    alpha: 0.5,
                                   ),
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isWeb ? 30 : 25,
-                                    vertical: isWeb ? 15 : 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    side: BorderSide(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  elevation: isHovering && isWeb ? 8 : 4,
+                                  width: 1,
                                 ),
                               ),
                             ),
@@ -421,7 +412,8 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         );
                       }
 
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
                         return SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 50),
@@ -434,7 +426,11 @@ class _CoordinatorWalletState extends State<CoordinatorWallet> {
                         );
                       }
 
-                      final data = snapshot.requireData;
+                      if (!snapshot.hasData) {
+                        return const SliverToBoxAdapter(child: SizedBox.shrink());
+                      }
+
+                      final data = snapshot.data!;
                       final filteredData = data.docs
                           .where(
                             (doc) =>
